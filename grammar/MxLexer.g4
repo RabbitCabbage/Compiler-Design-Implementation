@@ -1,4 +1,11 @@
 lexer grammar MxLexer;
+Literal:
+    BooleanLiteral
+    | IntegerLiteral
+    | StringLiteral
+    | NullLiteral;
+
+
 BooleanLiteral: True_ | False_;
 
 IntegerLiteral: DecimalLiteral;
@@ -45,7 +52,7 @@ Return: 'return';
 
 //the first number cannot be 0
 //there can be '/'' for the division of the long numbers;
-DecimalLiteral: NONZERODIGIT ('\''? DIGIT)*;
+DecimalLiteral: NONZERODIGIT ('\''? DIGIT)* | '0';
 
 //`fragment` means the word DIGIT should not be referenced, except in lexer file;
 fragment NONZERODIGIT: [1-9];
@@ -125,7 +132,37 @@ Colon: ':';
 
 Semicolon: ';';
 
+LessLess: '<<';
+
+GreaterGreater: '>>';
+
 Dot: '.';
+
+RightArrow: '->';
+
+Print: 'print';
+
+Println: 'println';
+
+PrintInt: 'printInt';
+
+PrintlnInt: 'printlnInt';
+
+GetString: 'getString';
+
+GetInt: 'getInt';
+
+ToString: 'toString';
+
+Length: 'length';
+
+SubString: 'substring';
+
+ParseInt: 'parseInt';
+
+Ord: 'ord';
+
+Size: 'size';
 
 //identifiers for variables and functions and classes
 Identifier: LETTER (LETTER | DIGIT | UNDERLINE)*;
@@ -137,3 +174,5 @@ Whitespacetoskip: [ \t\n\r]+ -> skip;
 Newline: ('\r' '\n'? | '\n') -> skip;
 
 LineComment: '//' ~ [\r\n]* -> skip;
+
+BlockComment: '/*' .*? '*/' -> skip;
