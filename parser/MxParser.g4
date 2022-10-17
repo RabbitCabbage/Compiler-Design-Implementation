@@ -3,7 +3,12 @@ options { tokenVocab = MxLexer; }
 
 program: programSections+ EOF;
 
-programSections: (functionDefinition | classDefinition | globalVariableDefinition);
+programSections:
+    (
+        functionDefinition
+        | classDefinition
+        | globalVariableDefinition
+    )+;
 
 classDefinition:
     Class Identifier LeftBrace (functionDefinition | variableDefinition)* RightBrace Semicolon;
