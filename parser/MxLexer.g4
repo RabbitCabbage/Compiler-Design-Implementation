@@ -14,6 +14,8 @@ StringLiteral: '"' CHAR* '"';
 
 NullLiteral: NULL;
 
+Main: 'main';
+
 Bool: 'bool';
 
 Int: 'int';

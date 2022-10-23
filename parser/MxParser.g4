@@ -1,14 +1,16 @@
 parser grammar MxParser;
 options { tokenVocab = MxLexer; }
 
-program: programSections+ EOF;
+program: programSection+ mainFunctionDefinition EOF;
 
-programSections:
-    (
-        functionDefinition
-        | classDefinition
-        | globalVariableDefinition
-    )+;
+programSection:
+    functionDefinition
+    | classDefinition
+    | variableDefinition
+    ;
+
+mainFunctionDefinition:
+    Int Main LeftParen RightParen  suite;
 
 classDefinition:
     Class Identifier LeftBrace (functionDefinition | variableDefinition)* RightBrace Semicolon;
@@ -16,10 +18,12 @@ classDefinition:
 functionDefinition:
     typeName Identifier LeftParen parameter? (Comma parameter)* RightParen suite;
 
-globalVariableDefinition:
-    typeName (LeftBracket RightBracket)* Identifier (Assign expression)? (Comma Identifier (Assign expression)?)* Semicolon;
-
-typeName: Bool | Int | Void | String | Identifier (LeftBracket RightBracket)*;// className
+typeName:
+    Bool
+    | Int
+    | Void
+    | String
+    | Identifier (LeftBracket RightBracket)*;// className
 
 parameter: typeName Identifier;
 
@@ -29,46 +33,54 @@ suite:
 
 statement:
     suite
-    | builtInFunctionReturnVoid Semicolon
+    | builtInFunctionReturnVoid
     | variableDefinition
     | expressionStatement
     | ifStatement
     | jumpStatement
-    | circulationStatement;
+    | circulationStatement
+    | emptyStatement;
+
+emptyStatement: Semicolon;
 
 builtInFunctionReturnVoid:
-    Print LeftParen (complexExpression) RightParen
-    | Println LeftParen (complexExpression) RightParen
-    | PrintInt LeftParen (complexExpression) RightParen
-    | PrintlnInt LeftParen (complexExpression) RightParen;
+    Print LeftParen (complexExpression) RightParen Semicolon
+    | Println LeftParen (complexExpression) RightParen Semicolon
+    | PrintInt LeftParen (complexExpression) RightParen  Semicolon
+    | PrintlnInt LeftParen (complexExpression) RightParen  Semicolon
+    ;
 
-variableDefinition: typeName Identifier (Assign expression)? (Comma Identifier (Assign expression)?)* Semicolon;
+variableDefinition:
+    typeName Identifier (Assign expression)? (Comma Identifier (Assign expression)?)* Semicolon                             # baseVariableDefinition
+    | typeName LeftBracket RightBracket(LeftBracket RightBracket)* Identifier (Assign newExpression)? (Comma Identifier (Assign newExpression)?)* Semicolon  # arrayVariableDefinition
+    ;
 
 expressionStatement: expression? Semicolon;
 
 jumpStatement:
-    (
-        Break
-        | Continue
-        | Return (expression)
-    )Semicolon;
+    Break Semicolon                         # breakSstatement
+    | Continue Semicolon                    # continyeSstatement
+    | Return (expression) Semicolon         # returnStatement
+    ;
 
 ifStatement:
-    If LeftParen expression RightParen statement (Else statement)*;
+    If LeftParen expression RightParen trueStatement = statement (Else falseStatement = statement)*;
 
 circulationStatement:
-    While LeftParen expression RightParen statement
+    While LeftParen expression RightParen statement             # whileStatement
     | For LeftParen (
         forInitStatement expression? Semicolon expression?
-    ) RightParen statement;
+    ) RightParen statement                                      # forStatement
+    ;
 
 forInitStatement:
     variableDefinition | expressionStatement;//expressionStatement可以是空的
 
 
 expression:
-    complexExpression
-    | complexExpression Assign complexExpression;//todo?
+    complexExpression                               # calculationExpression
+    | complexExpression Assign complexExpression    # assignmentExpression
+    ;
 
 basicExpression:
     Literal
@@ -82,42 +94,46 @@ lambdaExpression:
     LeftBracket (And)? RightBracket (parameter? (Comma parameter)*) RightArrow suite;
 
 newExpression:
-    New typeName (LeftParen  expression? (Comma expression)* RightParen)?
-    | New typeName LeftBracket expression RightBracket (LeftBracket RightBracket)*;
+    New typeName (LeftParen  expression? (Comma expression)* RightParen)?               # newObjectExpression
+    | New typeName LeftBracket expression RightBracket (LeftBracket RightBracket)*      # newArrayExpression
+    ;
 
 complexExpression: //包括函数调用和对象成员的访问，存在着递归的定义
-    basicExpression
-    | LeftParen complexExpression RightParen
-    | complexExpression LeftBracket expression RightBracket //数组下标的取法
-    | complexExpression LeftParen  expression? (Comma expression)* RightParen //函数调用，可能存在递归的嵌套
-    | complexExpression Dot builtInFunctionWithReturnValue_Dot
-    | complexExpression Dot Identifier
-    | Minus complexExpression
-    | (PlusPlus | MinusMinus) complexExpression
-    | complexExpression (PlusPlus | MinusMinus)
-    | Not complexExpression
-    | Tilde complexExpression
-    | complexExpression (Div | Star | Mod) complexExpression
-    | complexExpression (Plus | Minus) complexExpression
-    | (LessLess | GreaterGreater) complexExpression
-    | complexExpression (Greater | GreaterEqual | Less | LessEqual) complexExpression
-    | complexExpression (Equal | NotEqual) complexExpression
-    | complexExpression And complexExpression
-    | complexExpression Caret complexExpression
-    | complexExpression Or complexExpression
-    | complexExpression AndAnd complexExpression
-    | complexExpression OrOr complexExpression;
+    basicExpression                                                                          # primaryExpression
+    | LeftParen complexExpression RightParen                                                 # parenExpression
+    | complexExpression LeftBracket expression RightBracket                                  # arrayIndexingExpression
+    | complexExpression LeftParen  expression? (Comma expression)* RightParen                # functionCallExpression
+    | complexExpression Dot builtInFunctionWithReturnValue_Dot                               # builtinfunctionCallExpression
+    | complexExpression Dot Identifier                                                       # memberCallExpression
+    | Minus complexExpression                                                                # prefixExression
+    | (PlusPlus | MinusMinus) complexExpression                                              # prefixIncrementDecrementExpression
+    | complexExpression (PlusPlus | MinusMinus)                                              # suffixIncrementDecrementExpression
+    | Not complexExpression                                                                  # prefixExpression
+    | Tilde complexExpression                                                                # prefixExpression
+    | complexExpression (Div | Star | Mod) complexExpression                                 # binaryExpression
+    | complexExpression (Plus | Minus) complexExpression                                     # binaryExpression
+    | complexExpression (LessLess | GreaterGreater) complexExpression                        # binaryExpression
+    | complexExpression (Greater | GreaterEqual | Less | LessEqual) complexExpression        # logicExpression
+    | complexExpression (Equal | NotEqual) complexExpression                                 # logicExpression
+    | complexExpression And complexExpression                                                # binaryExpression
+    | complexExpression Caret complexExpression                                              # binaryExpression
+    | complexExpression Or complexExpression                                                 # binaryExpression
+    | complexExpression AndAnd complexExpression                                             # logicExpression
+    | complexExpression OrOr complexExpression                                               # logicExpression
+    ;
 
 builtInFunctionWithReturnValue_Dot:
     Size LeftParen RightParen
     | Length LeftParen RightParen
     | SubString LeftParen complexExpression Comma complexExpression RightParen
     | ParseInt LeftParen RightParen
-    | Ord LeftParen (IntegerLiteral | expression) RightParen;
+    | Ord LeftParen (IntegerLiteral | expression) RightParen
+    ;
 
 builtInFunctionWithReturnValue:
     GetString LeftParen RightParen
     | GetInt LeftParen RightParen
-    | ToString LeftParen (complexExpression) RightParen;
+    | ToString LeftParen (complexExpression) RightParen
+    ;
 
 
