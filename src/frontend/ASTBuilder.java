@@ -179,7 +179,6 @@ public class ASTBuilder extends MxParserBaseVisitor<ASTNode>{
     }
 
     @Override public ASTNode visitVariableDefinition(MxParser.VariableDefinitionContext ctx){
-        //todo get_type & get_dim
         VariableDefNode vardef = new VariableDefNode(ctx.variableType().toString(),new Position(ctx),ctx.variableType().LeftBracket().size());
         ctx.declaration().forEach(a->vardef.declarations.add((DeclarationNode)visit(a)));
         return vardef;
