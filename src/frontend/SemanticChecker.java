@@ -2,29 +2,28 @@ package frontend;
 
 import ast.*;
 import util.Scope;
-import util.Type;
-import util.error.SemanticError;
 import util.GlobalScope;
 
-public class SemanticChecker implements ASTVisitor{
+public class SemanticChecker extends ASTVisitor{
     private Scope currentScope;
+    private GlobalScope gScope;
+
+    public SemanticChecker(GlobalScope g){
+        currentScope = g;
+        gScope = g;
+    }
     @Override
     public void visit(RootNode it) {
 
     }
 
     @Override
-    public void visit(BaseVariableDefNode it) {
+    public void visit(VariableDefNode it) {
 
     }
 
     @Override
     public void visit(FunctionDefNode it) {
-
-    }
-
-    @Override
-    public void visit(BlockStatementNode it) {
 
     }
 
@@ -63,30 +62,18 @@ public class SemanticChecker implements ASTVisitor{
 
     }
 
-    @Override
-    public void visit(BuiltInFunctionExpressionNode it) {
-
-    }
 
     @Override
     public void visit(ParameterNode parameterNode) {
 
     }
 
-    @Override
-    public void visit(BuiltInFunctionStatementNode it) {
-
-    }
 
     @Override
     public void visit(ClassDefNode it) {
 
     }
 
-    @Override
-    public void visit(ArrayVariableDefNode it) {
-
-    }
 
     @Override
     public void visit(DeclarationNode it) {

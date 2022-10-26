@@ -140,29 +140,6 @@ Dot: '.';
 
 RightArrow: '->';
 
-Print: 'print';
-
-Println: 'println';
-
-PrintInt: 'printInt';
-
-PrintlnInt: 'printlnInt';
-
-GetString: 'getString';
-
-GetInt: 'getInt';
-
-ToString: 'toString';
-
-Length: 'length';
-
-SubString: 'substring';
-
-ParseInt: 'parseInt';
-
-Ord: 'ord';
-
-Size: 'size';
 
 //identifiers for variables and functions and classes
 Identifier: LETTER (LETTER | DIGIT | UNDERLINE)*;

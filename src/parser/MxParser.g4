@@ -6,24 +6,32 @@ program: programSection+ EOF;
 programSection:
     functionDefinition
     | classDefinition
-    | baseVariableDefinition
-    | arrayVariableDefinition
+    | variableDefinition
     ;
 
 classDefinition:
-    Class Identifier LeftBrace (functionDefinition | baseVariableDefinition | arrayVariableDefinition)* RightBrace Semicolon;
+    Class Identifier LeftBrace (variableDefinition | constructFunctionDef | functionDefinition)* RightBrace Semicolon;
 
 functionDefinition:
-    typeName Identifier LeftParen parameter? (Comma parameter)* RightParen suite;
+    variableType Identifier LeftParen parameter? (Comma parameter)* RightParen suite;
 
-typeName:
+constructFunctionDef:
+    Identifier LeftParen parameter? (Comma parameter)* RightParen suite;
+
+basicType:
     Bool
     | Int
     | Void
     | String
-    | Identifier (LeftBracket RightBracket)*;// className
+    | Identifier;
 
-parameter: typeName Identifier;
+variableType:
+    basicType (LeftBracket RightBracket)*;
+
+newType:
+    basicType (LeftBracket expression RightBracket)* (LeftBracket RightBracket)*;
+
+parameter: variableType declaration;
 
 //是指代码块，比如函数体或普通代码块，可以嵌套
 suite:
@@ -31,9 +39,7 @@ suite:
 
 statement:
     suite
-    | builtInFunctionReturnVoid
-    | baseVariableDefinition
-    | arrayVariableDefinition
+    | variableDefinition
     | expressionStatement
     | ifStatement
     | jumpStatement
@@ -42,25 +48,16 @@ statement:
 
 emptyStatement: Semicolon;
 
-builtInFunctionReturnVoid:
-    Print LeftParen (complexExpression) RightParen Semicolon
-    | Println LeftParen (complexExpression) RightParen Semicolon
-    | PrintInt LeftParen (complexExpression) RightParen  Semicolon
-    | PrintlnInt LeftParen (complexExpression) RightParen  Semicolon
-    ;
+variableDefinition:
+    variableType declaration? (Comma declaration?)* Semicolon;
 
-baseVariableDefinition:
-    typeName declaration? (Comma declaration?)* Semicolon;
-arrayVariableDefinition:
-    typeName LeftBracket RightBracket(LeftBracket RightBracket)* declaration? (Comma declaration?)* Semicolon;
-
-declaration: Identifier (Assign expression);
+declaration: Identifier (Assign expression)?;
 
 expressionStatement: expression? Semicolon;
 
 jumpStatement:
-    Break Semicolon                         # breakSstatement
-    | Continue Semicolon                    # continyeSstatement
+    Break Semicolon                         # breakStatement
+    | Continue Semicolon                    # continueStatement
     | Return (expression) Semicolon         # returnStatement
     ;
 
@@ -70,17 +67,37 @@ ifStatement:
 circulationStatement:
     While LeftParen expression RightParen statement             # whileStatement
     | For LeftParen (
-        forInitStatement expression? Semicolon expression?
+        forInitStatement condition = expression? Semicolon next = expression?
     ) RightParen statement                                      # forStatement
     ;
 
 forInitStatement:
-    baseVariableDefinition | expressionStatement;//expressionStatement可以是空的
+    vardef = variableDefinition | init = expression;//expressionStatement可以是空的
 
 
 expression:
-    complexExpression                               # calculationExpression
-    | complexExpression Assign complexExpression    # assignmentExpression
+    basicExpression                                                                       # primaryExpression
+        | LeftParen expression RightParen                                                 # parenExpression
+        | expression LeftBracket expression RightBracket                                  # arrayIndexingExpression
+        | expression LeftParen  expression? (Comma expression)* RightParen                # functionCallExpression
+        | expression Dot Identifier                                                       # memberCallExpression
+        | op = Not expression                                                             # prefixExpression
+        | op = Tilde expression                                                           # prefixExpression
+        | <assoc=right> expression op  = (PlusPlus | MinusMinus)                          # suffixExpression
+        | <assoc=right> op  = (PlusPlus | MinusMinus) expression                          # prefixExpression
+        | op = Minus expression                                                           # prefixExression
+        | op = Plus expression                                                            # prefixExpression
+        | expression op  = (Div | Star | Mod) expression                                 # binaryExpression
+        | expression op  = (Plus | Minus) expression                                     # binaryExpression
+        | expression op  = (LessLess | GreaterGreater) expression                        # binaryExpression
+        | expression op  = (Greater | GreaterEqual | Less | LessEqual) expression        # binaryExpression
+        | expression op  = (Equal | NotEqual) expression                                 # binaryExpression
+        | expression op = And expression                                                # binaryExpression
+        | expression op = Caret expression                                              # binaryExpression
+        | expression op = Or expression                                                 # binaryExpression
+        | expression op = AndAnd expression                                             # binaryExpression
+        | expression op = OrOr expression                                               # binaryExpression
+        | <assoc=right> expression Assign expression                                    # assignmentExpression
     ;
 
 basicExpression:
@@ -88,53 +105,11 @@ basicExpression:
     | Identifier//变量
     | This
     | lambdaExpression
-    | newExpression
-    | builtInFunctionWithReturnValue;
+    | newExpression;
 
 lambdaExpression:
-    LeftBracket (And)? RightBracket (parameter? (Comma parameter)*) RightArrow suite;
+    LeftBracket (And)? RightBracket (parameter? (Comma parameter)*) RightArrow suite LeftParen (expression (Comma expression)*)? RightParen;
 
 newExpression:
-    New typeName (LeftParen  expression? (Comma expression)* RightParen)?               # newObjectExpression
-    | New typeName LeftBracket expression RightBracket (LeftBracket RightBracket)*      # newArrayExpression
-    ;
-
-complexExpression: //包括函数调用和对象成员的访问，存在着递归的定义
-    basicExpression                                                                          # primaryExpression
-    | LeftParen complexExpression RightParen                                                 # parenExpression
-    | complexExpression LeftBracket expression RightBracket                                  # arrayIndexingExpression
-    | complexExpression LeftParen  expression? (Comma expression)* RightParen                # functionCallExpression
-    | complexExpression Dot builtInFunctionWithReturnValue_Dot                               # builtinfunctionCallExpression
-    | complexExpression Dot Identifier                                                       # memberCallExpression
-    | Minus complexExpression                                                                # prefixExression
-    | (PlusPlus | MinusMinus) complexExpression                                              # prefixIncrementDecrementExpression
-    | complexExpression (PlusPlus | MinusMinus)                                              # suffixIncrementDecrementExpression
-    | Not complexExpression                                                                  # prefixExpression
-    | Tilde complexExpression                                                                # prefixExpression
-    | complexExpression (Div | Star | Mod) complexExpression                                 # binaryExpression
-    | complexExpression (Plus | Minus) complexExpression                                     # binaryExpression
-    | complexExpression (LessLess | GreaterGreater) complexExpression                        # binaryExpression
-    | complexExpression (Greater | GreaterEqual | Less | LessEqual) complexExpression        # logicExpression
-    | complexExpression (Equal | NotEqual) complexExpression                                 # logicExpression
-    | complexExpression And complexExpression                                                # binaryExpression
-    | complexExpression Caret complexExpression                                              # binaryExpression
-    | complexExpression Or complexExpression                                                 # binaryExpression
-    | complexExpression AndAnd complexExpression                                             # logicExpression
-    | complexExpression OrOr complexExpression                                               # logicExpression
-    ;
-
-builtInFunctionWithReturnValue_Dot:
-    Size LeftParen RightParen
-    | Length LeftParen RightParen
-    | SubString LeftParen complexExpression Comma complexExpression RightParen
-    | ParseInt LeftParen RightParen
-    | Ord LeftParen (IntegerLiteral | expression) RightParen
-    ;
-
-builtInFunctionWithReturnValue:
-    GetString LeftParen RightParen
-    | GetInt LeftParen RightParen
-    | ToString LeftParen (complexExpression) RightParen
-    ;
-
+    New newType (LeftParen  expression? (Comma expression)* RightParen)?;
 

@@ -4,16 +4,20 @@ import util.Position;
 import java.util.ArrayList;
 
 public class FunctionDefNode extends ASTNode{
-    public ArrayList<StatementNode> stmts;
+    public StatementNode stmts;
+    public ClassDefNode belong = null;
     public String name;
-    public ParameterNode parameterlist;
+    public ArrayList<ParameterNode> parameterlist;
     String returntype;
+    int returndim;
 
-    public FunctionDefNode(String type, String name,ParameterNode para,Position pos){
+    public FunctionDefNode(String type,int dim, String name, StatementNode st,ClassDefNode belong,Position pos){
         super(pos);
-        returntype = type;
-        stmts = new ArrayList<>();
-        parameterlist = para;
+        returndim = dim;
+        stmts = st;
+        this.returntype = type;
+        this.belong = belong;
+        parameterlist = new ArrayList<>();
         this.name = name;
     }
 

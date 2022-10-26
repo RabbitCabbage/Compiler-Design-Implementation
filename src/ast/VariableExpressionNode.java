@@ -1,6 +1,5 @@
 package ast;
 
-import util.Type;
 import util.Position;
 
 public class VariableExpressionNode extends ExpressionNode{
