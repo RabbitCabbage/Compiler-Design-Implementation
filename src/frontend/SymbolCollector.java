@@ -24,17 +24,24 @@ public class SymbolCollector extends ASTVisitor {
 
         ClassDefNode String = new ClassDefNode(new Position(0,0),"String");
         currentClass = String;
-        ParameterNode para_length = new ParameterNode(new Position(0,0));
-        para_length.paralist.put("s","string");
-        FunctionDefNode length = new FunctionDefNode("int","length",para_length,String,new Position(0,0));
-        ParameterNode para_substring = new ParameterNode(new Position(0,0));
-        para_substring.paralist.put("left","int");
-        para_substring.paralist.put("right","int");
-        FunctionDefNode substring = new FunctionDefNode("string","substring",para_substring,String,new Position(0,0));
-        FunctionDefNode parseint = new FunctionDefNode("int","parseInt",new ParameterNode(new Position(0,0)),String,new Position(0,0));
-        ParameterNode para_ord = new ParameterNode(new Position(0,0));
-        para_ord.paralist.put("pos","int");
-        FunctionDefNode ord = new FunctionDefNode("int","ord",para_ord,String,new Position(0,0));
+
+        ParameterNode string = new ParameterNode(new Position(0,0),"string",0,new  DeclarationNode("s",null,new Position(0,0)));
+        FunctionDefNode length = new FunctionDefNode("int",0,"length",null,String,new Position(0,0));
+        length.parameterlist.add(string);
+
+        ParameterNode left = new ParameterNode(new Position(0,0),"int",0,new DeclarationNode("left",null,new Position(0,0)));
+        ParameterNode right = new ParameterNode(new Position(0,0),"int",0,new DeclarationNode("right",null,new Position(0,0)));
+        FunctionDefNode substring = new FunctionDefNode("string",0,"substring",null,String,new Position(0,0));
+        substring.parameterlist.add(left);
+        substring.parameterlist.add(right);
+
+        FunctionDefNode parseint = new FunctionDefNode("int",0,"parseInt",null,String,new Position(0,0));
+
+        ParameterNode pos = new ParameterNode(new Position(0,0),"int",0,new DeclarationNode("pos",null,new Position(0,0)));
+        FunctionDefNode ord = new FunctionDefNode("int",0,"ord",null,String,new Position(0,0));
+        ord.parameterlist.add(pos);
+
+
         String.methoddefs.add(length);
         String.methoddefs.add(substring);
         String.methoddefs.add(parseint);
@@ -47,38 +54,36 @@ public class SymbolCollector extends ASTVisitor {
         Void.accept(this);
         currentClass = null;
 
-        ParameterNode para_print = new ParameterNode(new Position(0,0));
-        para_print.paralist.put("str","string");
-        FunctionDefNode print = new FunctionDefNode("void","print",para_print,null,new Position(0,0));
+        ParameterNode str = new ParameterNode(new Position(0,0),"string",0,new DeclarationNode("str",null,new Position(0,0)));
+        FunctionDefNode print = new FunctionDefNode("void",0,"print",null,null,new Position(0,0));
+        print.parameterlist.add(str);
         print.accept(this);
 
-        ParameterNode para_println = new ParameterNode(new Position(0,0));
-        para_println.paralist.put("str","string");
-        FunctionDefNode println = new FunctionDefNode("void","println",para_println,null,new Position(0,0));
+        FunctionDefNode println = new FunctionDefNode("void",0,"println",null,null,new Position(0,0));
+        println.parameterlist.add(str);
         println.accept(this);
 
-        ParameterNode para_printint = new ParameterNode(new Position(0,0));
-        para_printint.paralist.put("n","int");
-        FunctionDefNode printint = new FunctionDefNode("void","printInt",para_printint,null,new Position(0,0));
+        ParameterNode n = new ParameterNode(new Position(0,0),"int",0,new DeclarationNode("n",null,new Position(0,0)));
+        FunctionDefNode printint = new FunctionDefNode("void",0,"printInt",null,null,new Position(0,0));
+        printint.parameterlist.add(n);
         printint.accept(this);
 
-        ParameterNode para_printlnint = new ParameterNode(new Position(0,0));
-        para_printlnint.paralist.put("n","int");
-        FunctionDefNode printlnint = new FunctionDefNode("void","printlnInt",para_printlnint,null,new Position(0,0));
+        FunctionDefNode printlnint = new FunctionDefNode("void",0,"printlnInt",null,null,new Position(0,0));
+        printlnint.parameterlist.add(n);
         printlnint.accept(this);
 
-        FunctionDefNode getstring = new FunctionDefNode("void","getString",null,null,new Position(0,0));
+        FunctionDefNode getstring = new FunctionDefNode("void",0,"getString",null,null,new Position(0,0));
         getstring.accept(this);
 
-        FunctionDefNode getint = new FunctionDefNode("void","getInt",null,null,new Position(0,0));
+        FunctionDefNode getint = new FunctionDefNode("void",0,"getInt",null,null,new Position(0,0));
         getint.accept(this);
 
-        ParameterNode para_tostring = new ParameterNode(new Position(0,0));
-        para_tostring.paralist.put("i","int");
-        FunctionDefNode tostring = new FunctionDefNode("string","toString",para_tostring,null,new Position(0,0));
+        ParameterNode i = new ParameterNode(new Position(0,0),"int",0,new DeclarationNode("i",null,new Position(0,0)));
+        FunctionDefNode tostring = new FunctionDefNode("string",0,"toString",null,null,new Position(0,0));
+        tostring.parameterlist.add(i);
         tostring.accept(this);
 
-        FunctionDefNode size = new FunctionDefNode("int","size",null,null,new Position(0,0));
+        FunctionDefNode size = new FunctionDefNode("int",0,"size",null,null,new Position(0,0));
         size.accept(this);
     }
 
@@ -92,20 +97,42 @@ public class SymbolCollector extends ASTVisitor {
     @Override
     public void visit(VariableDefNode it) {
         for(DeclarationNode v:it.declarations){
-            if(currentClass.vardefs.contains(v.name))
-                throw new SemanticError("member variable " + v.name + " has been defined");
+            if(currentClass.variablemap.containsKey(v.name))
+                throw new SemanticError("member variable " + v.name + " has been defined",it.pos);
             v.type = it.typename;
-            currentClass.variablemap.put()
+            currentClass.variablemap.put(v.name,v);
         }
     }
 
     @Override
     public void visit(ClassDefNode it) {
-
+        if(symbols.classTypeUsed(it.name))
+            throw new SemanticError("class name "+ it.name +" has been defined", it.pos);
+        symbols.addClassType(it.name,it);
+        currentClass = it;
+        it.vardefs.forEach(a->a.accept(this));
+        it.methoddefs.forEach(a->a.accept(this));
+        currentClass = null;
     }
 
     @Override
-    public void visit(DeclarationNode it) {
-
+    public void visit(FunctionDefNode it) {
+        if(currentClass == null){
+            if(symbols.functionTypeUsed(it.name))
+                throw new SemanticError("function "+it.name+" has been defined", it.pos);
+            symbols.addFunctionType(it.name,it);
+        }else {
+            it.belong = currentClass;
+            if(currentClass.methodmap.containsKey(it.name))
+                throw new SemanticError("method "+it.name+" has been defined in class"+currentClass.name,it.pos);
+            if(it.name.equals(currentClass.name)){
+                //说明这个是个构造函数
+                if(it.returntype != null)
+                    throw new SemanticError("constructor function has a wrong return type",it.pos);
+                else
+                    it.returntype = currentClass.name;
+            }
+            currentClass.methodmap.put(it.name,it);
+        }
     }
 }

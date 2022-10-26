@@ -8,8 +8,8 @@ public class FunctionDefNode extends ASTNode{
     public ClassDefNode belong = null;
     public String name;
     public ArrayList<ParameterNode> parameterlist;
-    String returntype;
-    int returndim;
+    public String returntype;
+    public int returndim;
 
     public FunctionDefNode(String type,int dim, String name, StatementNode st,ClassDefNode belong,Position pos){
         super(pos);

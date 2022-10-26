@@ -40,7 +40,7 @@ public class ASTBuilder extends MxParserBaseVisitor<ASTNode>{
             ctx.constructFunctionDef().forEach(a->classdef.methoddefs.add((FunctionDefNode)visit(a)));
         }else{
             SuiteNode suite = new SuiteNode(new Position(ctx));
-            FunctionDefNode default_ = new FunctionDefNode(ctx.Identifier().toString(),0,ctx.Identifier().toString(),suite,classdef,new Position(ctx));
+            FunctionDefNode default_ = new FunctionDefNode(null,0,ctx.Identifier().toString(),suite,classdef,new Position(ctx));
             classdef.methoddefs.add(default_);
         }
         if(ctx.functionDefinition()!=null)ctx.functionDefinition().forEach(a -> classdef.methoddefs.add((FunctionDefNode)visit(a)));
@@ -64,7 +64,7 @@ public class ASTBuilder extends MxParserBaseVisitor<ASTNode>{
 
     @Override public ASTNode visitConstructFunctionDef(MxParser.ConstructFunctionDefContext ctx){
         SuiteNode suite = (SuiteNode)visit(ctx.suite());
-        FunctionDefNode funcdef = new FunctionDefNode(ctx.Identifier().toString(),0,ctx.Identifier().toString(),suite,null,new Position(ctx));
+        FunctionDefNode funcdef = new FunctionDefNode(null,0,ctx.Identifier().toString(),suite,null,new Position(ctx));
         if(ctx.parameter()!=null) {
             ctx.parameter().forEach(a -> funcdef.parameterlist.add((ParameterNode)visit(a)));
         }

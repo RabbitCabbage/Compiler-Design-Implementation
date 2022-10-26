@@ -12,7 +12,7 @@ public class ClassDefNode extends ASTNode{
 
     //这个里面要记下这些变量的映射，从名字到node
     public HashMap<String,FunctionDefNode> methodmap;
-    public HashMap<String,VariableDefNode> variablemap;
+    public HashMap<String,DeclarationNode> variablemap;
 
     public ClassDefNode(Position pos, String name){
         super(pos);
