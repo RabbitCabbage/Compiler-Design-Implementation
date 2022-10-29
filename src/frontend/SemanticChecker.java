@@ -291,7 +291,7 @@ public class SemanticChecker extends ASTVisitor {
         //System.out.println(it.rhs.type);
         //System.out.println(it.lhs.dim);
         //System.out.println(it.rhs.dim);
-        if (it.rhs.type.equals("null") && it.lhs.dim == 0 && it.lhs.type.equals("string")&& it.lhs.type.equals("int")&& it.lhs.type.equals("bool")) {
+        if (it.rhs.type.equals("null") && it.lhs.dim == 0 && (it.lhs.type.equals("string")|| it.lhs.type.equals("int")|| it.lhs.type.equals("bool"))) {
             throw new SemanticError("null type cannot be assigned to primitive type", it.pos);
         } else {
             //System.out.println(it.lhs.dim);
