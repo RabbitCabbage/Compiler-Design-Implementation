@@ -459,6 +459,8 @@ public class SemanticChecker extends ASTVisitor {
                         throw new SemanticError("this variable " + it.primaryExpression + " has not been defined", it.pos);
                 }
             }
+            if(it.pos.row()<currentScope.findVariable(it.primaryExpression,true).pos.row() && currentClass == null)
+                throw new SemanticError("the variable is not defined",it.pos);
             it.assignable = true;
             it.type = currentScope.findVariable(it.primaryExpression, true).type;
             it.dim = currentScope.findVariable(it.primaryExpression, true).dim;
