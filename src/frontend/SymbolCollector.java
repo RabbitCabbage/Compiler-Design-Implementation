@@ -72,7 +72,7 @@ public class SymbolCollector extends ASTVisitor {
         printlnint.parameterlist.add(n);
         printlnint.accept(this);
 
-        FunctionDefNode getstring = new FunctionDefNode("void", 0, "getString", null, null, new Position(0, 0));
+        FunctionDefNode getstring = new FunctionDefNode("string", 0, "getString", null, null, new Position(0, 0));
         getstring.accept(this);
 
         FunctionDefNode getint = new FunctionDefNode("void", 0, "getInt", null, null, new Position(0, 0));

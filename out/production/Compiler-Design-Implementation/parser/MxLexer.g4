@@ -4,7 +4,7 @@ BooleanLiteral: True_ | False_;
 
 IntegerLiteral: DecimalLiteral;
 
-StringLiteral: '"' CHAR* '"';
+StringLiteral: '"' ('\\"' | '\\''\\'  | .)*? '"';
 
 NullLiteral: NULL;
 

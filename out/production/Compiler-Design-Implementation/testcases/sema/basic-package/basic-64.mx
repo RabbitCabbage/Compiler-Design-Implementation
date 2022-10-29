@@ -7,27 +7,27 @@ Verdict: Success
 Origin Package: Semantic Pretest
 */
 int main() {
-    if (vvvvvv()) { }
+    if (to_bool()) { }
     else {
-        int i = vvwvvv();
-        for ( ; !vvvvvv() && vvvvvv() || vvvvvv(); i < vvwvvv()) {
+        int i = to_int();
+        for ( ; !to_bool() && to_bool() || to_bool(); i < to_int()) {
             println("hahaha");
         }
-        vvvvwv();
+        to_void();
     }
-    return (vwvvvv() + toString(vvwvvv())).parseInt();
+    return (to_string() + toString(to_int())).parseInt();
 }
 
-bool vvvvvv() {
-    if (vwvvvv() >= vwvvvv() && vwvvvv() <= vwvvvv()) {
-        return toString(vvwvvv()) == vwvvvv();
+bool to_bool() {
+    if (to_string() >= to_string() && to_string() <= to_string()) {
+        return toString(to_int()) == to_string();
     }
-    return vwvvvv() != vwvvvv();
+    return to_string() != to_string();
 }
 
-void vvvvwv() {
-    int tmp = vvwvvv();
-    if ((vvwvvv() ^ vwvvvv().parseInt()) > -(++tmp) || (vvvvvv() == (vwvvvv() + vwvvvv() >= vwvvvv()))) {
+void to_void() {
+    int tmp = to_int();
+    if ((to_int() ^ to_string().parseInt()) > -(++tmp) || (to_bool() == (to_string() + to_string() >= to_string()))) {
         for ( ; ; ) {
             break;
         }
@@ -35,10 +35,10 @@ void vvvvwv() {
     return;
 }
 
-string vwvvvv() {
+string to_string() {
     return getString();
 }
 
-int vvwvvv() {
-    return vwvvvv().parseInt() % vwvvvv().parseInt();
+int to_int() {
+    return to_string().parseInt() % to_string().parseInt();
 }
