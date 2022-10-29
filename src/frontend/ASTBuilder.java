@@ -125,7 +125,7 @@ public class ASTBuilder extends MxParserBaseVisitor<ASTNode> {
 
     @Override
     public ASTNode visitEmptyStatement(MxParser.EmptyStatementContext ctx) {
-        return null;
+        return new EmptyStatementNode(new Position(ctx));
     }
 
     @Override
@@ -258,8 +258,13 @@ public class ASTBuilder extends MxParserBaseVisitor<ASTNode> {
 
     @Override
     public ASTNode visitNewExpression(MxParser.NewExpressionContext ctx){
+        //System.out.println(ctx.newExpression_().newType().getText());
+        //System.out.println(ctx.newExpression_().newType().basicType().getText());
+        //System.out.println(ctx.newExpression_().newType().LeftBracket().size()+ctx.newExpression_().newType().LeftBracket().size());
         NewExpressionNode newexpr = new NewExpressionNode(new Position(ctx),ctx.newExpression_().newType().basicType().getText(),ctx.newExpression_().newType().LeftBracket().size());
         ctx.newExpression_().newType().expression().forEach(a->newexpr.expression.add((ExpressionNode)visit(a)));
+        if(ctx.newExpression_().newType().rear!=null)
+            throw new SemanticError("new expression should write the specified dimension in the front",new Position(ctx));
         //这个arraylist里面装的是维数的初始化表达式们
         //System.out.println(newexpr.dim);
         return newexpr;

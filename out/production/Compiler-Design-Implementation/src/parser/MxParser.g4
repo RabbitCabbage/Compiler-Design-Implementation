@@ -29,7 +29,9 @@ variableType:
     basicType (LeftBracket RightBracket)*;
 
 newType:
-    basicType (LeftBracket expression RightBracket)* (LeftBracket RightBracket)*;
+    basicType (LeftBracket expression RightBracket)* (LeftBracket RightBracket)+ (LeftBracket rear = expression RightBracket)+
+    | basicType (LeftBracket expression RightBracket)* (LeftBracket RightBracket)*
+    ;
 
 parameter: variableType declaration;
 
@@ -53,7 +55,7 @@ variableDefinition:
 
 declaration: Identifier (Assign expression)?;
 
-expressionStatement: expression? Semicolon;
+expressionStatement: expression Semicolon;
 
 jumpStatement:
     Break Semicolon                         # breakStatement

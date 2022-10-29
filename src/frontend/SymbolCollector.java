@@ -25,9 +25,7 @@ public class SymbolCollector extends ASTVisitor {
         ClassDefNode String = new ClassDefNode(new Position(0, 0), "string");
         currentClass = String;
 
-        ParameterNode string = new ParameterNode(new Position(0, 0), "string", 0, new DeclarationNode("s", null, new Position(0, 0)));
         FunctionDefNode length = new FunctionDefNode("int", 0, "length", null, String, new Position(0, 0));
-        length.parameterlist.add(string);
 
         ParameterNode left = new ParameterNode(new Position(0, 0), "int", 0, new DeclarationNode("left", null, new Position(0, 0)));
         ParameterNode right = new ParameterNode(new Position(0, 0), "int", 0, new DeclarationNode("right", null, new Position(0, 0)));
@@ -75,7 +73,7 @@ public class SymbolCollector extends ASTVisitor {
         FunctionDefNode getstring = new FunctionDefNode("string", 0, "getString", null, null, new Position(0, 0));
         getstring.accept(this);
 
-        FunctionDefNode getint = new FunctionDefNode("void", 0, "getInt", null, null, new Position(0, 0));
+        FunctionDefNode getint = new FunctionDefNode("int", 0, "getInt", null, null, new Position(0, 0));
         getint.accept(this);
 
         ParameterNode i = new ParameterNode(new Position(0, 0), "int", 0, new DeclarationNode("i", null, new Position(0, 0)));

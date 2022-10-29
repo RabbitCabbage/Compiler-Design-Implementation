@@ -19,8 +19,8 @@ import util.error.SemanticError;
 public class Compiler {
     public static void main(String[] args) throws Exception {
         InputStream input = System.in;
-//        String name = "test.mx";
-//        InputStream input = new FileInputStream("./testcases/sema/basic-package/basic-0.mx");
+//        InputStream input = new FileInputStream("./testcases/sema/scope-package/scope-1.mx");
+//        InputStream input = new FileInputStream(args[0]);
         try {
             MxLexer lexer = new MxLexer(CharStreams.fromStream(input));
             lexer.removeErrorListeners();

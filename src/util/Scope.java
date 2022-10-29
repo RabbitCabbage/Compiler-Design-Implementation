@@ -4,6 +4,7 @@ import ast.DeclarationNode;
 import util.error.SemanticError;
 
 import java.util.HashMap;
+import java.util.function.BiConsumer;
 //todo 存变量的值。
 
 public class Scope {
@@ -18,6 +19,9 @@ public class Scope {
     }
 
     public boolean containVariable(String name, boolean toLookForInParent) {
+//        for (String key : members.keySet()) {
+//            System.out.println(key);
+//        }
         if (members.containsKey(name)) return true;
         else if (parent != null && toLookForInParent) {
             return parent.containVariable(name, toLookForInParent);

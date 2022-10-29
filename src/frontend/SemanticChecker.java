@@ -4,11 +4,13 @@ import ast.*;
 import util.Scope;
 import util.error.SemanticError;
 
+import java.util.Stack;
+
 public class SemanticChecker extends ASTVisitor {
     public Symbols symbols;
     public Scope currentScope;
     public ClassDefNode currentClass = null;
-    public FunctionDefNode currentFunction = null;
+    public Stack<FunctionDefNode> currentFunction = new Stack<>();
 
     public SemanticChecker(Symbols symbols) {
         super();
@@ -28,13 +30,13 @@ public class SemanticChecker extends ASTVisitor {
         }
         if (!have_main)
             throw new SemanticError("no main function defined in the program", it.pos);
-        it.funcdefs.forEach(a -> a.accept(this));
-        it.classdefs.forEach(a -> a.accept(this));
         it.vardefs.forEach(a -> a.accept(this));
+        it.classdefs.forEach(a -> a.accept(this));
+        it.funcdefs.forEach(a -> a.accept(this));
     }
 
     public void visit(VariableDefNode it) {
-        System.out.println(it.pos.toString());
+        //System.out.println(it.pos.toString());
         //System.out.println("variable def node");
         //System.out.println(it.typename);
         //System.out.println(it.dim);
@@ -52,6 +54,7 @@ public class SemanticChecker extends ASTVisitor {
     }
 
     public void visit(DeclarationNode it) {
+        //System.out.println(it.name);
         //System.out.println("declaration node");
         //System.out.println(it.name);
         //System.out.println(it.type);
@@ -64,11 +67,14 @@ public class SemanticChecker extends ASTVisitor {
             it.init.accept(this);
             if (!it.init.type.equals("null") && !it.init.type.equals(it.type))
                 throw new SemanticError("expression is of a wrong type which cannot be assigned to the variable defined", it.pos);
-            if (it.init.dim != it.dim)
+            //System.out.println(it.init.dim);
+            //System.out.println(it.dim);
+            if (!it.init.type.equals("null") && it.init.dim != it.dim)
                 throw new SemanticError("expression is of a wrong dimension which cannot be assigned to the variable defined", it.pos);
         }
+        //System.out.println(it.name);
         currentScope.defineVariable(it.name, it, it.pos);
-        if (currentClass != null && currentFunction == null) {
+        if (currentClass != null && currentFunction.empty()) {
             it.belong = currentClass;
         }
     }
@@ -76,14 +82,17 @@ public class SemanticChecker extends ASTVisitor {
     public void visit(FunctionDefNode it) {
         //System.out.println(it.name);
         //System.out.println(it.returntype);
-        if (symbols.classTypes.containsKey((it.name)))
-            throw new SemanticError("function name" + it.name + "collides with class name", it.pos);
+        if (it.name.equals("main") && !it.returntype.equals("int"))
+            throw new SemanticError("main function must return int value", it.pos);
+        if (it.name.equals("main") && !it.parameterlist.isEmpty())
+            throw new SemanticError("main function should not have parameters", it.pos);
+        if (symbols.classTypes.containsKey((it.name)) && !it.name.equals(currentClass.name))
+            throw new SemanticError("function name " + it.name + "collides with class name", it.pos);
         if (!symbols.classTypeUsed(it.returntype))
             throw new SemanticError("the return type of function " + it.name + " has not been defined", it.pos);
-        if (currentFunction != null)
+        if (!currentFunction.empty() && !it.is_lambda)
             throw new SemanticError("function cannot be defined in function", it.pos);
-
-        currentFunction = it;
+        currentFunction.push(it);
         currentScope = new Scope(currentScope);
         it.parameterlist.forEach(a -> a.accept(this));
         if (it.stmts != null) it.stmts.accept(this);
@@ -93,7 +102,7 @@ public class SemanticChecker extends ASTVisitor {
                 throw new SemanticError("function with non-void return type has no return statement", it.pos);
         }
         currentScope = currentScope.parent;
-        currentFunction = null;
+        currentFunction.pop();
     }
 
 
@@ -114,32 +123,32 @@ public class SemanticChecker extends ASTVisitor {
     }
 
     public void visit(ReturnStatementNode it) {
-        if (currentFunction == null)
+        if (currentFunction.empty())
             throw new SemanticError("return statement is not in a function", it.pos);
         if (it.value != null) {
-            if (currentFunction.is_constructor)
+            if (currentFunction.peek().is_constructor)
                 throw new SemanticError("constructor function should have no return", it.pos);
             it.value.accept(this);
-            if (currentFunction.is_lambda) {
-                currentFunction.returntype = it.value.type;
-                currentFunction.returndim = it.value.dim;
+            if (currentFunction.peek().is_lambda) {
+                currentFunction.peek().returntype = it.value.type;
+                currentFunction.peek().returndim = it.value.dim;
             }
-            if (!it.value.type.equals("null") && !it.value.type.equals(currentFunction.returntype))
-                throw new SemanticError("the value returned is of a wrong type, requiring " + currentFunction.returntype + " returning " + it.value.type, it.pos);
-            if (it.value.dim != currentFunction.returndim)
+            if (!it.value.type.equals("null") && !it.value.type.equals(currentFunction.peek().returntype))
+                throw new SemanticError("the value returned is of a wrong type, requiring " + currentFunction.peek().returntype + " returning " + it.value.type, it.pos);
+            if (it.value.dim != currentFunction.peek().returndim)
                 throw new SemanticError("the value returned is of a wrong dimension", it.pos);
-            if (currentFunction.name.equals("main") && !it.value.type.equals("int"))
+            if (currentFunction.peek().name.equals("main") && !it.value.type.equals("int"))
                 throw new SemanticError("main function must return int type", it.pos);
         } else {
-            if (currentFunction.returntype != null && !currentFunction.returntype.equals("void")) {
+            if (currentFunction.peek().returntype != null && !currentFunction.peek().returntype.equals("void") && !currentFunction.peek().is_constructor) {
                 throw new SemanticError("function needs an expression returned", it.pos);
             }
-            if (currentFunction.is_lambda) {
-                currentFunction.returndim = 0;
-                currentFunction.returntype = "void";
+            if (currentFunction.peek().is_lambda) {
+                currentFunction.peek().returndim = 0;
+                currentFunction.peek().returntype = "void";
             }
         }
-        currentFunction.has_been_returned = true;
+        currentFunction.peek().has_been_returned = true;
     }
 
     public void visit(ParameterNode it) {
@@ -151,14 +160,14 @@ public class SemanticChecker extends ASTVisitor {
     }
 
     public void visit(ClassDefNode it) {
-        if (currentFunction != null)
+        if (!currentFunction.empty())
             throw new SemanticError("class cannot be defined in function", it.pos);
         if (currentClass != null)
             throw new SemanticError("class cannot be defined in class", it.pos);
         currentClass = it;
         currentScope = new Scope(currentScope);
-        it.methoddefs.forEach(a -> a.accept(this));
         it.vardefs.forEach(a -> a.accept(this));
+        it.methoddefs.forEach(a -> a.accept(this));
         currentScope = currentScope.parent;
         currentClass = null;
     }
@@ -194,6 +203,7 @@ public class SemanticChecker extends ASTVisitor {
             }
         }
         if (it.next != null) it.next.accept(this);
+        //System.out.println(it.pos.toString());
         it.stmts.accept(this);
         currentScope = currentScope.parent;
     }
@@ -209,6 +219,8 @@ public class SemanticChecker extends ASTVisitor {
         it.rhs.accept(this);
         if (it.lhs.is_function != null || it.rhs.is_function != null)
             throw new SemanticError("one of the operands is function", it.pos);
+        if (it.lhs.type.equals("void") || it.rhs.type.equals("void"))
+            throw new SemanticError("type void cannot be calculated", it.pos);
         if (it.lhs.dim != 0 || it.rhs.dim != 0) {
             //说明这是个数组对象
             if (!it.opcode.equals("!=") && !it.opcode.equals("=="))
@@ -216,13 +228,18 @@ public class SemanticChecker extends ASTVisitor {
             if ((it.lhs.dim != 0 && !it.rhs.type.equals("null")) || (it.rhs.dim != 0 && !it.lhs.type.equals("null")))
                 throw new SemanticError("array object can only be calculated with null type", it.pos);
         } else {
-            if (!it.lhs.type.equals(it.rhs.type))
-                throw new SemanticError("the binary expression has different types in lhs and rhs", it.pos);
+            //Systemtem.out.println(it.lhs.type);
+            if (!it.lhs.type.equals(it.rhs.type)) {
+                if (it.opcode.equals("==") || it.opcode.equals("!=")) {
+                    if (!it.lhs.type.equals("null") && !it.rhs.type.equals("null"))
+                        throw new SemanticError("the binary expression has different types in lhs and rhs", it.pos);
+                } else throw new SemanticError("the binary expression has different types in lhs and rhs", it.pos);
+            }
             if (it.lhs.type.equals("bool")
                     && (!it.opcode.equals("==") && !it.opcode.equals("!=")
                     && !it.opcode.equals("&&") && !it.opcode.equals("||")))
                 throw new SemanticError("bool type cannot be calculated by " + it.opcode, it.pos);
-            if (it.lhs.type.equals("string")
+            else if (it.lhs.type.equals("string")
                     && (!it.opcode.equals("+")
                     && !it.opcode.equals("<")
                     && !it.opcode.equals(">")
@@ -231,6 +248,14 @@ public class SemanticChecker extends ASTVisitor {
                     && !it.opcode.equals("==")
                     && !it.opcode.equals("!=")))
                 throw new SemanticError("string type cannot be calculated by " + it.opcode, it.pos);
+            if (!it.lhs.type.equals("int") && !it.lhs.type.equals("bool") && !it.lhs.type.equals("string")) {
+                if (!it.opcode.equals("==") && !it.opcode.equals("!=")) {
+                    //System.out.println(it.lhs.type);
+                    //System.out.println(it.rhs.type);
+                    //System.out.println(it.opcode);
+                    throw new SemanticError("class object cannot be calculated by this operator", it.pos);
+                }
+            }
         }
         if (it.opcode.equals("==")
                 || it.opcode.equals("!=")
@@ -266,10 +291,16 @@ public class SemanticChecker extends ASTVisitor {
         //System.out.println(it.rhs.type);
         //System.out.println(it.lhs.dim);
         //System.out.println(it.rhs.dim);
-        if (!it.rhs.type.equals("null") && it.lhs.dim != it.rhs.dim)
-            throw new SemanticError("lhs ans rhs have different dimensions", it.pos);
-        if (!it.rhs.type.equals("null") && !it.lhs.type.equals(it.rhs.type))
-            throw new SemanticError("lhs ans rhs have different types", it.pos);
+        if (it.rhs.type.equals("null") && it.lhs.dim == 0 && it.lhs.type.equals("string")&& it.lhs.type.equals("int")&& it.lhs.type.equals("bool")) {
+            throw new SemanticError("null type cannot be assigned to primitive type", it.pos);
+        } else {
+            //System.out.println(it.lhs.dim);
+            //System.out.println(it.rhs.dim);
+            if (!it.rhs.type.equals("null") && it.lhs.dim != it.rhs.dim)
+                throw new SemanticError("lhs ans rhs have different dimensions", it.pos);
+            if (!it.rhs.type.equals("null") && !it.lhs.type.equals(it.rhs.type))
+                throw new SemanticError("lhs ans rhs have different types", it.pos);
+        }
         it.type = it.lhs.type;
         it.dim = it.lhs.dim;
         it.assignable = false;
@@ -299,7 +330,7 @@ public class SemanticChecker extends ASTVisitor {
             throw new SemanticError("the expression is not an integer to decrement or increment", it.pos);
         it.type = "int";
         it.dim = 0;
-        it.assignable = true;
+        it.assignable = false;//返回的是一个构造，不可以赋值
     }
 
     public void visit(CallExpressionNode it) {
@@ -307,6 +338,9 @@ public class SemanticChecker extends ASTVisitor {
         if (it.object.is_function == null)
             throw new SemanticError("the object of the expression is not function", it.pos);
         FunctionDefNode func = it.object.is_function;
+        //System.out.println(func.name);
+        //System.out.println(func.parameterlist.size());
+        //System.out.println(it.auguments.size());
         if (it.auguments.size() != func.parameterlist.size())
             throw new SemanticError("the number of the auguments is wrong", it.pos);
         it.auguments.forEach(a -> a.accept(this));
@@ -314,11 +348,14 @@ public class SemanticChecker extends ASTVisitor {
         int k = 0;
         for (ParameterNode i : func.parameterlist) {
             if (!it.auguments.get(k).type.equals("null") && !i.type.equals(it.auguments.get(k).type)) {
+                //System.out.println(it.auguments.get(k).type);
+                //System.out.println(i.type);
                 throw new SemanticError("the type of the auguments " + it.auguments.get(k).type + " is wrong", it.pos);
             }
             if (i.dim != it.auguments.get(k).dim) {
                 throw new SemanticError("the dimension of the auguments " + it.auguments.get(k).dim + " is wrong", it.pos);
             }
+            k++;
         }
         //System.out.println(it.object.type);
         //System.out.println(func.name);
@@ -342,14 +379,14 @@ public class SemanticChecker extends ASTVisitor {
         }
         FunctionDefNode lambda_func = new FunctionDefNode(null, 0, "lambda" + it.pos.toString(), it.stmts, null, it.pos);
         lambda_func.is_lambda = true;
-        currentFunction = lambda_func;
+        currentFunction.push(lambda_func);
         it.stmts.accept(this);
         //这时候就会在return中推断出这个函数的返回值类型和维数
-        it.is_function = currentFunction;
+        it.is_function = currentFunction.peek();
         it.type = it.is_function.returntype;
         it.dim = it.is_function.returndim;
         it.is_function = null;
-        currentFunction = null;
+        currentFunction.pop();
         currentScope = currentScope.parent;
     }
 
@@ -402,13 +439,25 @@ public class SemanticChecker extends ASTVisitor {
             it.dim = 0;
         }
         if (it.exprtype == PrimaryExpressionNode.ExpressionType.identifierExpr) {
-            //System.out.println(it.primaryExpression);
             if (!currentScope.containVariable(it.primaryExpression, true)) {//没找到变量
-                if (symbols.functionTypes.containsKey(it.primaryExpression)) {//但是找到了这个函数
+                if (currentClass != null && currentClass.methodmap.containsKey(it.primaryExpression)) {
+                    it.is_function = currentClass.methodmap.get(it.primaryExpression);
+                    return;
+                } else if (symbols.functionTypes.containsKey(it.primaryExpression)) {//但是找到了这个函数
                     it.is_function = symbols.functionTypes.get(it.primaryExpression);
                     //System.out.println(it.is_function.name);
                     return;
-                } else throw new SemanticError("this variable has not been defined", it.pos);
+                } else {
+                    //System.out.println(it.primaryExpression);
+                    //System.out.println(currentClass.name);
+                    if (currentClass != null && currentClass.variablemap.containsKey(it.primaryExpression)) {
+                        it.type = currentClass.variablemap.get(it.primaryExpression).type;
+                        it.dim = currentClass.variablemap.get(it.primaryExpression).dim;
+                        it.assignable = true;
+                        return;
+                    } else
+                        throw new SemanticError("this variable " + it.primaryExpression + " has not been defined", it.pos);
+                }
             }
             it.assignable = true;
             it.type = currentScope.findVariable(it.primaryExpression, true).type;
@@ -423,10 +472,15 @@ public class SemanticChecker extends ASTVisitor {
         //it是想用object来dot那个member
         if (!symbols.classTypeUsed(it.object.type))
             throw new SemanticError("no such class has been defined", it.pos);
-
         if (!symbols.classTypes.get(it.object.type).variablemap.containsKey(it.id) && !symbols.classTypes.get(it.object.type).methodmap.containsKey(it.id)) {
             if (!it.id.equals("size") && !it.id.equals("this"))//也不是size函数或者this指针
                 throw new SemanticError("no member or method named " + it.id + " in class " + it.object.type, it.pos);
+            if (it.id.equals("size")) {
+                if (it.object.dim != 0) {
+                    it.is_function = symbols.functionTypes.get("size");
+                    return;
+                } else throw new SemanticError("only array object can call size function", it.pos);
+            }
         }
         if (symbols.classTypes.get(it.object.type).methodmap.containsKey(it.id)) {
             it.is_function = symbols.classTypes.get(it.object.type).methodmap.get(it.id);
@@ -437,16 +491,12 @@ public class SemanticChecker extends ASTVisitor {
             it.dim = declaration.dim;
             it.assignable = true;
         }
-        if (it.id.equals("size")) {
-            if (it.object.dim != 0) {
-                it.is_function = symbols.functionTypes.get("size");
-            } else throw new SemanticError("only array object can call size function", it.pos);
-        }
     }
 
     public void visit(NewExpressionNode it) {
-        if(it.type.equals("void"))
-            throw new SemanticError("new expression cannot apply to void",it.pos);
+        //System.out.println(it.dim);
+        if (it.type.equals("void"))
+            throw new SemanticError("new expression cannot apply to void", it.pos);
         it.class_ = symbols.classTypes.get(it.type);//先找到这个定义的类
         if (it.class_ == null)
             throw new SemanticError("the class of the new expression has not been defined", it.pos);

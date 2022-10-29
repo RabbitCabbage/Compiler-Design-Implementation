@@ -2,9 +2,9 @@ import os
 from re import *
 import subprocess
 print(os.getcwd())
-#assert(os.getcwd()==r'mnt/d/desktop/Compiler-Design-Implementation/src')# Compiler的绝对路径
-print(os.path.exists(r'D:\Desktop\Compiler-Design-Implementation\testcase\sema'))
-for path,pname,file in os.walk(r'D:\Desktop\Compiler-Design-Implementation\testcase\sema'):#testcase相对Compiler的路径
+assert(os.getcwd()==r'D:\Desktop\Compiler-Design-Implementation\src')# Compiler的绝对路径
+print(os.path.exists(r'D:\Desktop\Compiler-Design-Implementation\testcases\sema'))
+for path,pname,file in os.walk(r'D:\Desktop\Compiler-Design-Implementation\testcases\sema'):#testcase相对Compiler的路径
     print(path,file)
     for f in file:
         if not match(".*mx$",f):

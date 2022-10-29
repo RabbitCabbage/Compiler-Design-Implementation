@@ -53,4 +53,7 @@ public class ASTVisitor{
     public void visit(BreakStatementNode it) {}
 
     public void visit(ContinueStatementNode it) {}
+
+    public void visit(EmptyStatementNode it) {
+    }
 }
