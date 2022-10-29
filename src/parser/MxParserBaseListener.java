@@ -304,6 +304,18 @@ public class MxParserBaseListener implements MxParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterLambdaExpression(MxParser.LambdaExpressionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitLambdaExpression(MxParser.LambdaExpressionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterMemberCallExpression(MxParser.MemberCallExpressionContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -335,6 +347,18 @@ public class MxParserBaseListener implements MxParserListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitSuffixExpression(MxParser.SuffixExpressionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterNewExpression(MxParser.NewExpressionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitNewExpression(MxParser.NewExpressionContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -388,18 +412,6 @@ public class MxParserBaseListener implements MxParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterPrefixExression(MxParser.PrefixExressionContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitPrefixExression(MxParser.PrefixExressionContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterBasicExpression(MxParser.BasicExpressionContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -412,25 +424,25 @@ public class MxParserBaseListener implements MxParserListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterLambdaExpression(MxParser.LambdaExpressionContext ctx) { }
+	@Override public void enterLambdaExpression_(MxParser.LambdaExpression_Context ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitLambdaExpression(MxParser.LambdaExpressionContext ctx) { }
+	@Override public void exitLambdaExpression_(MxParser.LambdaExpression_Context ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterNewExpression(MxParser.NewExpressionContext ctx) { }
+	@Override public void enterNewExpression_(MxParser.NewExpression_Context ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void exitNewExpression(MxParser.NewExpressionContext ctx) { }
+	@Override public void exitNewExpression_(MxParser.NewExpression_Context ctx) { }
 
 	/**
 	 * {@inheritDoc}

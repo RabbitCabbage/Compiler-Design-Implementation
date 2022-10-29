@@ -20,9 +20,6 @@ public class ASTVisitor{
 
     public void visit(AssignmentExpressionNode it){}
 
-    public void visit(VariableExpressionNode it){}
-
-
     public void visit(ParameterNode parameterNode){}
 
     public void visit(ClassDefNode it){}
@@ -31,40 +28,29 @@ public class ASTVisitor{
 
     public void visit(SuiteNode it) {}
 
-    public void visit(WhileStatementNode node) {}
+    public void visit(WhileStatementNode it) {}
 
-    public void visit(ForStatementNode node) {}
+    public void visit(ForStatementNode it) {}
 
-    public void visit(PrefixExpressionNode node) {
-    }
+    public void visit(PrefixExpressionNode it) {}
 
-    public void visit(SuffixExpressionNode node) {
-    }
+    public void visit(SuffixExpressionNode it) {}
 
-    public void visit(FunctionCallExpressionNode node) {
-    }
+    public void visit(CallExpressionNode it) {}
 
-    public void visit(LambdaExpressionNode node) {
-    }
+    public void visit(LambdaExpressionNode it) {}
 
-    public void visit(ArrayIndexExpressionNode node) {
-    }
+    public void visit(ArrayIndexExpressionNode it) {}
 
-    public void visit(ParenExpressionNode node) {
-    }
+    public void visit(ParenExpressionNode it) {}
 
-    public void visit(PrimaryExpressionNode node) {
-    }
+    public void visit(PrimaryExpressionNode it) {}
 
-    public void visit(MemberCallExpressionNode node) {
-    }
+    public void visit(MemberCallExpressionNode it) {}
 
-    public void visit(NewExpressionNode node) {
-    }
+    public void visit(NewExpressionNode it) {}
 
-    public void visit(BreakStatementNode node) {
-    }
+    public void visit(BreakStatementNode it) {}
 
-    public void visit(ContinueStatementNode node) {
-    }
+    public void visit(ContinueStatementNode it) {}
 }

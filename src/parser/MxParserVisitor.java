@@ -162,6 +162,13 @@ public interface MxParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitBinaryExpression(MxParser.BinaryExpressionContext ctx);
 	/**
+	 * Visit a parse tree produced by the {@code lambdaExpression}
+	 * labeled alternative in {@link MxParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitLambdaExpression(MxParser.LambdaExpressionContext ctx);
+	/**
 	 * Visit a parse tree produced by the {@code memberCallExpression}
 	 * labeled alternative in {@link MxParser#expression}.
 	 * @param ctx the parse tree
@@ -182,6 +189,13 @@ public interface MxParserVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitSuffixExpression(MxParser.SuffixExpressionContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code newExpression}
+	 * labeled alternative in {@link MxParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNewExpression(MxParser.NewExpressionContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code assignmentExpression}
 	 * labeled alternative in {@link MxParser#expression}.
@@ -211,28 +225,21 @@ public interface MxParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitArrayIndexingExpression(MxParser.ArrayIndexingExpressionContext ctx);
 	/**
-	 * Visit a parse tree produced by the {@code prefixExression}
-	 * labeled alternative in {@link MxParser#expression}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitPrefixExression(MxParser.PrefixExressionContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link MxParser#basicExpression}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitBasicExpression(MxParser.BasicExpressionContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MxParser#lambdaExpression}.
+	 * Visit a parse tree produced by {@link MxParser#lambdaExpression_}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitLambdaExpression(MxParser.LambdaExpressionContext ctx);
+	T visitLambdaExpression_(MxParser.LambdaExpression_Context ctx);
 	/**
-	 * Visit a parse tree produced by {@link MxParser#newExpression}.
+	 * Visit a parse tree produced by {@link MxParser#newExpression_}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitNewExpression(MxParser.NewExpressionContext ctx);
+	T visitNewExpression_(MxParser.NewExpression_Context ctx);
 }

@@ -1,34 +1,41 @@
 package util;
 
+import ast.DeclarationNode;
 import util.error.SemanticError;
 
 import java.util.HashMap;
 //todo 存变量的值。
 
 public class Scope {
-    private HashMap<String,String> members;//建立从name到type的映射，可能是class，因此类型用string表示
-    private Scope parent;
+    public HashMap<String, DeclarationNode> members;//建立从name到type的映射，可能是class，因此类型用string表示
+    public Scope parent;
+    public boolean is_loop = false;
 
-    public Scope(Scope parentscope){
-        members = new HashMap<String,String>();
+    public Scope(Scope parentscope) {
+        members = new HashMap<>();
         this.parent = parentscope;
+        if (parentscope != null) this.is_loop = parentscope.is_loop;//在whilestatement中可能会有嵌套suite，因此是不是训话需要有继承性
     }
 
-    public boolean containVariable(String name, boolean toLookForInParent){//todo 仅提供在所有
-        if (members.containsKey(name))return true;
-        else if (parent != null && toLookForInParent){
+    public boolean containVariable(String name, boolean toLookForInParent) {
+        if (members.containsKey(name)) return true;
+        else if (parent != null && toLookForInParent) {
             return parent.containVariable(name, toLookForInParent);
-        }else return false;
+        }
+        return false;
     }
 
-    public void defineVariable(String name,String type, Position pos){
-        if (members.containsKey(name))
-            throw new SemanticError("variable redefined",pos);
-        else members.put(name,type);
-    }
-
-    public String getTypeFromName(String name, Position pos){
+    public DeclarationNode findVariable(String name, boolean toLookForInParent) {
         if (members.containsKey(name)) return members.get(name);
-        throw new SemanticError("no such variable: " + name, pos);
+        else if (parent != null && toLookForInParent) {
+            return parent.findVariable(name, toLookForInParent);
+        }
+        return null;
+    }
+
+    public void defineVariable(String name, DeclarationNode delcare, Position pos) {
+        if (members.containsKey(name))
+            throw new SemanticError("variable redefined", pos);
+        else members.put(name, delcare);
     }
 }

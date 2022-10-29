@@ -3,7 +3,7 @@ package ast;
 import util.Position;
 
 public class WhileStatementNode extends StatementNode{
-    public ExpressionNode condition;
+    public ExpressionNode condition= null;
     public StatementNode stmt;
 
     public WhileStatementNode(ExpressionNode expr, StatementNode st, Position pos){

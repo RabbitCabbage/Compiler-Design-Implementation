@@ -13,6 +13,7 @@ public class VariableDefNode extends StatementNode{
         super(pos);
         declarations = new ArrayList<>();
         typename = tn;
+        this.dim = dim;
     }
 
     public void accept(ASTVisitor visitor){

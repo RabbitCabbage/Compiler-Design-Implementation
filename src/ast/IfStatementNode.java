@@ -4,7 +4,7 @@ import util.Position;
 import java.util.ArrayList;
 
 public class IfStatementNode extends StatementNode{
-    public ExpressionNode condition;
+    public ExpressionNode condition = null;
     public StatementNode thenstmt;
     public StatementNode elsestmt;
 
