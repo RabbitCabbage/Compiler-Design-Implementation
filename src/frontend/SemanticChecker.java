@@ -72,7 +72,9 @@ public class SemanticChecker extends ASTVisitor {
             if (!it.init.type.equals("null") && it.init.dim != it.dim)
                 throw new SemanticError("expression is of a wrong dimension which cannot be assigned to the variable defined", it.pos);
         }
+        //System.out.println("define a variable");
         //System.out.println(it.name);
+        //System.out.println(it.type);
         currentScope.defineVariable(it.name, it, it.pos);
         if (currentClass != null && currentFunction.empty()) {
             it.belong = currentClass;
@@ -94,6 +96,8 @@ public class SemanticChecker extends ASTVisitor {
             throw new SemanticError("function cannot be defined in function", it.pos);
         currentFunction.push(it);
         currentScope = new Scope(currentScope);
+        currentScope.function_paras_defined = true;
+        //System.out.println(currentScope.members.size());
         it.parameterlist.forEach(a -> a.accept(this));
         if (it.stmts != null) it.stmts.accept(this);
         //这时就会得到函数是否被return的信息
@@ -154,9 +158,10 @@ public class SemanticChecker extends ASTVisitor {
     public void visit(ParameterNode it) {
         if (!symbols.classTypes.containsKey(it.type))
             throw new SemanticError("the type of the parameter" + it.type + "has not been defined", it.pos);
-        it.declare.accept(this);
         it.declare.type = it.type;
         it.declare.dim = it.dim;
+        it.declare.accept(this);
+        //currentScope.defineVariable(it.declare.name,it.declare,it.pos);
     }
 
     public void visit(ClassDefNode it) {
@@ -173,9 +178,13 @@ public class SemanticChecker extends ASTVisitor {
     }
 
     public void visit(SuiteNode it) {
-        currentScope = new Scope(currentScope);
+        boolean newed = false;
+        if (!currentScope.function_paras_defined) {
+            currentScope = new Scope(currentScope);
+            newed = true;
+        }else currentScope.function_paras_defined = false;
         if (it.stmts != null) it.stmts.forEach(a -> a.accept(this));
-        currentScope = currentScope.parent;
+        if (newed) currentScope = currentScope.parent;
     }
 
     public void visit(WhileStatementNode it) {
@@ -291,7 +300,7 @@ public class SemanticChecker extends ASTVisitor {
         //System.out.println(it.rhs.type);
         //System.out.println(it.lhs.dim);
         //System.out.println(it.rhs.dim);
-        if (it.rhs.type.equals("null") && it.lhs.dim == 0 && (it.lhs.type.equals("string")|| it.lhs.type.equals("int")|| it.lhs.type.equals("bool"))) {
+        if (it.rhs.type.equals("null") && it.lhs.dim == 0 && (it.lhs.type.equals("string") || it.lhs.type.equals("int") || it.lhs.type.equals("bool"))) {
             throw new SemanticError("null type cannot be assigned to primitive type", it.pos);
         } else {
             //System.out.println(it.lhs.dim);
@@ -334,6 +343,8 @@ public class SemanticChecker extends ASTVisitor {
     }
 
     public void visit(CallExpressionNode it) {
+        //System.out.println("call function");
+        it.object.should_be_function = true;
         it.object.accept(this);
         if (it.object.is_function == null)
             throw new SemanticError("the object of the expression is not function", it.pos);
@@ -369,6 +380,7 @@ public class SemanticChecker extends ASTVisitor {
         if (it.auguments.size() != it.parameters.size())
             throw new SemanticError("the number of the auguments is wrong", it.pos);
         currentScope = new Scope(currentScope);
+        currentScope.function_paras_defined = true;
         it.auguments.forEach(a -> a.accept(this));
         it.parameters.forEach(a -> a.accept(this));
         for (int k = 0; k < it.parameters.size(); ++k) {
@@ -412,6 +424,8 @@ public class SemanticChecker extends ASTVisitor {
     }
 
     public void visit(PrimaryExpressionNode it) {
+        //System.out.println(it.primaryExpression);
+        //System.out.println(it.exprtype.toString());
         if (it.exprtype == PrimaryExpressionNode.ExpressionType.boolLiteralExpr) {
             it.assignable = false;
             it.type = "bool";
@@ -439,7 +453,7 @@ public class SemanticChecker extends ASTVisitor {
             it.dim = 0;
         }
         if (it.exprtype == PrimaryExpressionNode.ExpressionType.identifierExpr) {
-            if (!currentScope.containVariable(it.primaryExpression, true)) {//没找到变量
+            if (it.should_be_function) {
                 if (currentClass != null && currentClass.methodmap.containsKey(it.primaryExpression)) {
                     it.is_function = currentClass.methodmap.get(it.primaryExpression);
                     return;
@@ -447,20 +461,27 @@ public class SemanticChecker extends ASTVisitor {
                     it.is_function = symbols.functionTypes.get(it.primaryExpression);
                     //System.out.println(it.is_function.name);
                     return;
-                } else {
-                    //System.out.println(it.primaryExpression);
-                    //System.out.println(currentClass.name);
-                    if (currentClass != null && currentClass.variablemap.containsKey(it.primaryExpression)) {
-                        it.type = currentClass.variablemap.get(it.primaryExpression).type;
-                        it.dim = currentClass.variablemap.get(it.primaryExpression).dim;
-                        it.assignable = true;
-                        return;
-                    } else
-                        throw new SemanticError("this variable " + it.primaryExpression + " has not been defined", it.pos);
                 }
+                throw new SemanticError("no function named " + it.primaryExpression + "has been defined", it.pos);
             }
-            if(it.pos.row()<currentScope.findVariable(it.primaryExpression,true).pos.row() && currentClass == null)
-                throw new SemanticError("the variable is not defined",it.pos);
+            //System.out.println(it.primaryExpression);
+            //System.out.println(currentScope.members.containsKey("abc"));
+            //System.out.println(currentScope.members.size());
+            if (currentScope.containVariable(it.primaryExpression, false)) {
+                DeclarationNode tmp = currentScope.findVariable(it.primaryExpression, false);
+                it.dim = tmp.dim;
+                it.type = tmp.type;
+                it.assignable = true;
+            } else if (currentClass != null && currentClass.variablemap.containsKey(it.primaryExpression)) {
+                it.type = currentClass.variablemap.get(it.primaryExpression).type;
+                it.dim = currentClass.variablemap.get(it.primaryExpression).dim;
+                it.assignable = true;
+                return;
+            } else if (!currentScope.containVariable(it.primaryExpression, true)) {//没找到变量
+                throw new SemanticError("this variable " + it.primaryExpression + " has not been defined", it.pos);
+            }
+            if (it.pos.row() < currentScope.findVariable(it.primaryExpression, true).pos.row() && currentClass == null)
+                throw new SemanticError("the variable is not defined", it.pos);
             it.assignable = true;
             it.type = currentScope.findVariable(it.primaryExpression, true).type;
             it.dim = currentScope.findVariable(it.primaryExpression, true).dim;

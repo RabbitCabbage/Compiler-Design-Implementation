@@ -8,6 +8,8 @@ public abstract class ExpressionNode extends ASTNode{
     public boolean assignable = false;
     public boolean newed = false;
     public FunctionDefNode is_function = null;
+
+    public boolean should_be_function = false;
     public ExpressionNode(Position pos){
         super(pos);
     }

@@ -12,6 +12,8 @@ public class Scope {
     public Scope parent;
     public boolean is_loop = false;
 
+    public boolean function_paras_defined = false;
+
     public Scope(Scope parentscope) {
         members = new HashMap<>();
         this.parent = parentscope;
@@ -38,6 +40,9 @@ public class Scope {
     }
 
     public void defineVariable(String name, DeclarationNode delcare, Position pos) {
+//        for (String key : members.keySet()) {
+//            System.out.println(key);
+//        }
         if (members.containsKey(name))
             throw new SemanticError("variable redefined", pos);
         else members.put(name, delcare);

@@ -19,7 +19,7 @@ import util.error.SemanticError;
 public class Compiler {
     public static void main(String[] args) throws Exception {
         InputStream input = System.in;
-//        InputStream input = new FileInputStream("./testcases/sema/basic-package/basic-9.mx");
+//        InputStream input = new FileInputStream("./testcases/sema/symbol-package/symbol-1.mx");
 //        InputStream input = new FileInputStream(args[0]);
         try {
             MxLexer lexer = new MxLexer(CharStreams.fromStream(input));
