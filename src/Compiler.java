@@ -1,4 +1,5 @@
 import ast.RootNode;
+import backend.IRBuilder;
 import frontend.ASTBuilder;
 import frontend.SemanticChecker;
 import frontend.SymbolCollector;
@@ -18,8 +19,8 @@ import util.error.SemanticError;
 
 public class Compiler {
     public static void main(String[] args) throws Exception {
-        InputStream input = System.in;
-//        InputStream input = new FileInputStream("./testcases/sema/symbol-package/symbol-1.mx");
+//        InputStream input = System.in;
+        InputStream input = new FileInputStream("./testcases/sema/misc-package/misc-5.mx");
 //        InputStream input = new FileInputStream(args[0]);
         try {
             MxLexer lexer = new MxLexer(CharStreams.fromStream(input));
@@ -34,6 +35,9 @@ public class Compiler {
             Symbols symbols = new Symbols();
             new SymbolCollector(symbols).visit(programnode);
             new SemanticChecker(symbols).visit(programnode);
+            IRBuilder ir = new IRBuilder(symbols);
+            ir.visit(programnode);
+            System.out.println(ir.llvm.toDotLLVM());
         } catch (Error error) {
             System.err.println(error.toString());
             throw new RuntimeException();

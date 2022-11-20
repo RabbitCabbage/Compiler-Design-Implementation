@@ -14,7 +14,7 @@ public class SymbolCollector extends ASTVisitor {
 
         ClassDefNode Int = new ClassDefNode(new Position(0, 0), "int");
         currentClass = Int;
-        Int.accept(this);//todo what for
+        Int.accept(this);//为了收集到这个类
         currentClass = null;
 
         ClassDefNode Bool = new ClassDefNode(new Position(0, 0), "bool");

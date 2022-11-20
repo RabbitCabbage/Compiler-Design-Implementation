@@ -26,7 +26,9 @@ public class ASTBuilder extends MxParserBaseVisitor<ASTNode> {
             } else if (section.classDefinition() != null) {
                 root.classdefs.add((ClassDefNode) visit(section.classDefinition()));
             } else if (section.variableDefinition() != null) {
-                root.vardefs.add((VariableDefNode) visit(section.variableDefinition()));
+                VariableDefNode global_var = (VariableDefNode) visit(section.variableDefinition());
+                global_var.is_global = true;
+                root.vardefs.add(global_var);
             }
         }
         return root;
