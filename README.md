@@ -1,4 +1,5 @@
-# Compiler-2022
+# Rabbit Cabbage's Toy Compiler
+> this is Rabbit Cabbage's toy compiler trying to translate MxStar to RISC-V.
 
 ## 目录
 
