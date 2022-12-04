@@ -16,4 +16,9 @@ public class PrefixExpressionNode extends ExpressionNode{
     public void accept(ASTVisitor visitor){
         visitor.visit(this);
     }
+
+    @Override
+    public void calculate(){
+       //todo
+    }
 }

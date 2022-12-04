@@ -24,14 +24,18 @@ public class LLVM {
     }
     public String toDotLLVM(){
         StringBuilder text = new StringBuilder();
+        int global_string = 0;
         for(var vardef :globalVars.values()){
             if(!vardef.declare.type.equals("string")) {
-                text.append("@").append(vardef.declare.name).append(" = global ").append(getter.getType(vardef.declare.type)).append(" ").append(vardef.declare.init.toString()).append(", align ").append(getter.getSize(vardef.declare.type)).append("\n");
+                text.append("@").append(vardef.declare.name).append(" = global ").append(getter.getType(vardef.declare.type)).append(" ").append(vardef.declare.init.valueIR.values.get(0).number_value).append("\n");
             } else {
-                text.append("@.str = private unnamed_addr constant [").append(vardef.declare.init.toString().length()).append(" x i8]").append(vardef.declare.init.toString()).append(", align 1\n");
+                text.append("@.str");
+                if(global_string!=0){text.append(".").append(global_string++);}
+                else global_string++;
+                text.append("= private unnamed_addr constant [").append(vardef.declare.init.valueIR.values.get(0).string_value.length()).append(" x i8] ").append(vardef.declare.init.valueIR.values.get(0).string_value).append("\n");
+                text.append("@").append(vardef.declare.name).append(" = global i8* getelementptr inbounds ([").append(vardef.declare.init.valueIR.values.get(0).string_value.length()).append(" x i8], [").append(vardef.declare.init.valueIR.values.get(0).string_value.length()).append(" x i8]* @.str.").append(global_string-1).append(", i32 0, i32 0)\n");
             }
         }
-        text.append("\n");
         for(var clsdef: classes.values()){
             text.append("%struct.").append(clsdef.classdef.name).append(" = type{");
             for(var vardef: clsdef.classdef.variablemap.values()){
@@ -69,7 +73,7 @@ public class LLVM {
             text.append("define ").append(getter.getType(fcdef.funcdef.returntype)).append(" @").append(fcdef.funcdef.name).append("(");
             int count = 0;
             for(ParameterNode para: fcdef.funcdef.parameterlist){
-                text.append(getter.getType(para.type)).append(" %").append(count);
+                text.append(getter.getType(para.type)).append(" %").append(para.declare.name);
                 count = count + 1;
                 text.append(", ");
             }

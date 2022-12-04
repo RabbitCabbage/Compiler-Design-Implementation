@@ -132,6 +132,7 @@ public class ASTBuilder extends MxParserBaseVisitor<ASTNode> {
 
     @Override
     public ASTNode visitPrimaryExpression(MxParser.PrimaryExpressionContext ctx) {
+        //System.out.println(ctx.basicExpression().getText());
         PrimaryExpressionNode primary = new PrimaryExpressionNode(new Position(ctx), ctx.basicExpression().getText());
         if (ctx.basicExpression().BooleanLiteral() != null) {
             primary.dim = 0;

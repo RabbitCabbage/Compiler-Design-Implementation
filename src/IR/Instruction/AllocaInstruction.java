@@ -1,17 +1,15 @@
 package IR.Instruction;
 
 public class AllocaInstruction extends InstructionIR {
-    int register;
+    String name;
     String type;
-    int align;
-    public AllocaInstruction(int reg,String type,int align){
-        this.register = reg;
+    public AllocaInstruction(String name,String type){
+        this.name = name;
         this.type = type;
-        this.align = align;
     }
     public String toString(){
         StringBuilder alloc = new StringBuilder();
-        alloc.append("\t%").append(register).append(" = alloca ").append(type).append(", align ").append(align).append("\n");
+        alloc.append("\t%").append(name).append(" = alloca ").append(type).append("\n");
         return alloc.toString();
     }
 }

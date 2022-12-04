@@ -1,0 +1,20 @@
+int main_1(){
+    int a = 0;
+    int b = a;
+    return a;
+}
+void main_2(int a,int b){
+    int c = a;
+    c = a + b;
+    return;
+}
+int hello = 34;
+string hello1 = "hello world\n";
+string hello2 = "hello dlorw\n";
+int main(){
+    int a = 0;
+    int b = main_1();
+    main_1();
+    main_2(a,999);
+    return a;
+}
