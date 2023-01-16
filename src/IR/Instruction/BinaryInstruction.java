@@ -15,6 +15,19 @@ public class BinaryInstruction extends InstructionIR{
         result_reg = result;
         type = t;
     }
+    public String res_toString(){
+        StringBuilder reg = new StringBuilder();
+        if(opcode.equals("+"))reg.append("add").append(result_reg);
+        else if(opcode.equals("-"))reg.append("sub").append(result_reg);
+        else if(opcode.equals("*"))reg.append("mul").append(result_reg);
+        else if(opcode.equals("/"))reg.append("sdiv").append(result_reg);
+        else if(opcode.equals("%"))reg.append("srem").append(result_reg);
+        else if(opcode.equals("<<"))reg.append("shl").append(result_reg);
+        else if(opcode.equals(">>"))reg.append("ashr").append(result_reg);
+        else if(opcode.equals("&"))reg.append("and").append(result_reg);
+        else if(opcode.equals("|"))reg.append("or").append(result_reg);
+        else if(opcode.equals("^"))reg.append("xor").append(result_reg);
+        return reg.toString();    }
     public String toString(){
         StringBuilder binary = new StringBuilder();
         if(opcode.equals("+"))binary.append("\t%").append("add").append(result_reg).append(" = add ").append(type).append(" %").append(lhs_reg).append(", %").append(rhs_reg).append("\n");

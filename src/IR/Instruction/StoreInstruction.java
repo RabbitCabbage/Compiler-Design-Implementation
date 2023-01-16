@@ -26,9 +26,7 @@ public class StoreInstruction extends InstructionIR {
             else if(type.equals("string")) store.append("\tstore ").append(type).append(" ").append(value.string_value).append(", ").append(type).append("* %").append(name).append("\n");
             else if(type.equals("bool")) store.append("\tstore ").append(type).append(" ").append(value.bool_value).append(", ").append(type).append("* %").append(name).append("\n");
         }else {
-            if(type.equals("i32")) store.append("\tstore ").append(type).append(" ").append("%").append(reg).append(", ").append(type).append("* %").append(name).append("\n");
-            else if(type.equals("string")) store.append("\tstore ").append(type).append(" ").append("%").append(reg).append(", ").append(type).append("* %").append(name).append("\n");
-            else if(type.equals("bool")) store.append("\tstore ").append(type).append(" ").append("%").append(reg).append(", ").append(type).append("* %").append(name).append("\n");
+            store.append("\tstore ").append(type).append(" ").append("%").append(reg).append(", ").append(type).append("* %").append(name).append("\n");
         }
         return store.toString();
     }

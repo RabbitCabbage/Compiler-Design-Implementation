@@ -10,7 +10,7 @@ target triple = "x86_64-pc-linux-gnu"
 @.str.3 = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local void @_print_(i8* %str) #0 {
+define dso_local void @print(i8* %str) #0 {
 entry:
   %str.addr = alloca i8*, align 8
   store i8* %str, i8** %str.addr, align 8
@@ -22,7 +22,7 @@ entry:
 declare dso_local i32 @printf(i8*, ...) #1
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local void @_println_(i8* %str) #0 {
+define dso_local void @println(i8* %str) #0 {
 entry:
   %str.addr = alloca i8*, align 8
   store i8* %str, i8** %str.addr, align 8
@@ -32,7 +32,7 @@ entry:
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local void @_printInt_(i32 %num) #0 {
+define dso_local void @printInt(i32 %num) #0 {
 entry:
   %num.addr = alloca i32, align 4
   store i32 %num, i32* %num.addr, align 4
@@ -42,7 +42,7 @@ entry:
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local void @_printlnInt_(i32 %num) #0 {
+define dso_local void @printlnInt(i32 %num) #0 {
 entry:
   %num.addr = alloca i32, align 4
   store i32 %num, i32* %num.addr, align 4
@@ -52,7 +52,7 @@ entry:
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local i8* @_getString_() #0 {
+define dso_local i8* @getString() #0 {
 entry:
   %tmp = alloca i8*, align 8
   %call = call noalias i8* @malloc(i64 256) #4
@@ -69,7 +69,7 @@ declare dso_local noalias i8* @malloc(i64) #2
 declare dso_local i32 @__isoc99_scanf(i8*, ...) #1
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local i32 @_getInt_() #0 {
+define dso_local i32 @getInt() #0 {
 entry:
   %i = alloca i32, align 4
   %call = call i32 (i8*, ...) @__isoc99_scanf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str.2, i64 0, i64 0), i32* %i)
@@ -78,7 +78,7 @@ entry:
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local i8* @_toString_(i32 %i) #0 {
+define dso_local i8* @toString(i32 %i) #0 {
 entry:
   %i.addr = alloca i32, align 4
   %tmp = alloca i8*, align 8
@@ -96,7 +96,7 @@ entry:
 declare dso_local i32 @sprintf(i8*, i8*, ...) #2
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local i8* @_malloc_(i32 %length) #0 {
+define dso_local i8* @malloc_(i32 %length) #0 {
 entry:
   %length.addr = alloca i32, align 4
   %tmp = alloca i8*, align 8
@@ -119,7 +119,7 @@ entry:
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local i32 @_getArraySize_(i8* %array) #0 {
+define dso_local i32 @getArraySize(i8* %array) #0 {
 entry:
   %array.addr = alloca i8*, align 8
   %size_ptr = alloca i32*, align 8
@@ -134,7 +134,7 @@ entry:
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local i32 @_string_length(i8* %str) #0 {
+define dso_local i32 @string_length(i8* %str) #0 {
 entry:
   %str.addr = alloca i8*, align 8
   store i8* %str, i8** %str.addr, align 8
@@ -148,7 +148,7 @@ entry:
 declare dso_local i64 @strlen(i8*) #3
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local i8* @_string_substring_(i8* %str, i32 %left, i32 %right) #0 {
+define dso_local i8* @string_substring(i8* %str, i32 %left, i32 %right) #0 {
 entry:
   %str.addr = alloca i8*, align 8
   %left.addr = alloca i32, align 4
@@ -209,7 +209,7 @@ for.end:                                          ; preds = %for.cond
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local i32 @_string_parseInt_(i8* %str) #0 {
+define dso_local i32 @string_parseInt(i8* %str) #0 {
 entry:
   %str.addr = alloca i8*, align 8
   %i = alloca i32, align 4
@@ -224,7 +224,7 @@ entry:
 declare dso_local i32 @__isoc99_sscanf(i8*, i8*, ...) #2
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local i32 @_string_ord_(i8* %str, i32 %i) #0 {
+define dso_local i32 @string_ord(i8* %str, i32 %i) #0 {
 entry:
   %str.addr = alloca i8*, align 8
   %i.addr = alloca i32, align 4
@@ -240,7 +240,7 @@ entry:
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local i8* @_string_concat(i8* %str1, i8* %str2) #0 {
+define dso_local i8* @string_concat(i8* %str1, i8* %str2) #0 {
 entry:
   %str1.addr = alloca i8*, align 8
   %str2.addr = alloca i8*, align 8
@@ -272,7 +272,7 @@ declare dso_local i8* @strcpy(i8*, i8*) #2
 declare dso_local i8* @strcat(i8*, i8*) #2
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local signext i8 @_string_equal_(i8* %str1, i8* %str2) #0 {
+define dso_local signext i8 @string_equal(i8* %str1, i8* %str2) #0 {
 entry:
   %str1.addr = alloca i8*, align 8
   %str2.addr = alloca i8*, align 8
@@ -291,7 +291,7 @@ entry:
 declare dso_local i32 @strcmp(i8*, i8*) #3
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local signext i8 @_string_nequal_(i8* %str1, i8* %str2) #0 {
+define dso_local signext i8 @string_nequal(i8* %str1, i8* %str2) #0 {
 entry:
   %str1.addr = alloca i8*, align 8
   %str2.addr = alloca i8*, align 8
@@ -307,7 +307,7 @@ entry:
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local signext i8 @_string_lessthan_(i8* %str1, i8* %str2) #0 {
+define dso_local signext i8 @string_lessthan(i8* %str1, i8* %str2) #0 {
 entry:
   %str1.addr = alloca i8*, align 8
   %str2.addr = alloca i8*, align 8
@@ -323,7 +323,7 @@ entry:
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local signext i8 @_string_greaterthan_(i8* %str1, i8* %str2) #0 {
+define dso_local signext i8 @string_greaterthan(i8* %str1, i8* %str2) #0 {
 entry:
   %str1.addr = alloca i8*, align 8
   %str2.addr = alloca i8*, align 8
@@ -339,7 +339,7 @@ entry:
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local signext i8 @_string_notgreaterthan_(i8* %str1, i8* %str2) #0 {
+define dso_local signext i8 @string_notgreaterthan(i8* %str1, i8* %str2) #0 {
 entry:
   %str1.addr = alloca i8*, align 8
   %str2.addr = alloca i8*, align 8
@@ -355,7 +355,7 @@ entry:
 }
 
 ; Function Attrs: noinline nounwind optnone uwtable
-define dso_local signext i8 @_string_notlessthan_(i8* %str1, i8* %str2) #0 {
+define dso_local signext i8 @string_notlessthan(i8* %str1, i8* %str2) #0 {
 entry:
   %str1.addr = alloca i8*, align 8
   %str2.addr = alloca i8*, align 8

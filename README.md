@@ -1,6 +1,12 @@
 # Rabbit Cabbage's Toy Compiler
 > this is Rabbit Cabbage's toy compiler trying to translate MxStar to RISC-V.
-
+```llvm
+llvm-as IR.ll -o IR.bc
+llvm-link ./lib/builtin.bc IR.bc
+llc -filetype=obj total.bc -o total.o
+clang total.o -o total
+./total
+```
 ## 目录
 
 <!-- TOC -->

@@ -31,3 +31,6 @@
 *.out
 *.app
 *.class
+*.bc
+*.ll
+*.o
