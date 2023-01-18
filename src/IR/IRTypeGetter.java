@@ -5,16 +5,23 @@ import frontend.Symbols;
 
 public class IRTypeGetter {
     Symbols symbols;
-    public IRTypeGetter(Symbols sym){
+    LLVM llvm;
+    public IRTypeGetter(Symbols sym,LLVM llvm){
         symbols = sym;
+        this.llvm = llvm;
     }
 
-    public String getType(String typename,int dim) {
+    public String getType(String typename,int dim,String reg_name) {
+        //System.out.println(typename);
         StringBuilder type = new StringBuilder();
         if(typename.equals("int"))type.append("i32");
-        if(typename.equals("void"))return typename;
-        if(typename.equals("string"))type.append("i8*");
-        if(typename.equals("bool"))type.append(typename);
+        else if(typename.equals("void"))return typename;
+        else if(typename.equals("string")){
+            if(llvm.stringConstants.containsKey(reg_name)){
+                type.append("[").append(llvm.stringConstants.get(reg_name).length()).append(" x i8]*");
+            }else type.append("i8*");
+        }
+        else if(typename.equals("bool"))type.append(typename);
         else type.append("%struct."+typename);
         for(int i=0;i<i;++i){
             type.append("*");

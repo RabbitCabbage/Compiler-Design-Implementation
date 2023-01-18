@@ -12,4 +12,7 @@ public class AllocaInstruction extends InstructionIR {
         alloc.append("\t%").append(name).append(" = alloca ").append(type).append("\n");
         return alloc.toString();
     }
+    public String res_toString(){
+        return name;
+    }
 }

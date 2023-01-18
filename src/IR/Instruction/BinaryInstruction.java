@@ -27,19 +27,26 @@ public class BinaryInstruction extends InstructionIR{
         else if(opcode.equals("&"))reg.append("and").append(result_reg);
         else if(opcode.equals("|"))reg.append("or").append(result_reg);
         else if(opcode.equals("^"))reg.append("xor").append(result_reg);
+        else if(opcode.equals("==")||opcode.equals("!=")||opcode.equals("<")||opcode.equals("<=")||opcode.equals(">")||opcode.equals(">="))reg.append("cmp").append(result_reg);
         return reg.toString();    }
     public String toString(){
         StringBuilder binary = new StringBuilder();
-        if(opcode.equals("+"))binary.append("\t%").append("add").append(result_reg).append(" = add ").append(type).append(" %").append(lhs_reg).append(", %").append(rhs_reg).append("\n");
-        else if(opcode.equals("-"))binary.append("\t%").append("sub").append(result_reg).append(" = sub ").append(type).append(" %").append(lhs_reg).append(", %").append(rhs_reg).append("\n");
-        else if(opcode.equals("*"))binary.append("\t%").append("mul").append(result_reg).append(" = mul ").append(type).append(" %").append(lhs_reg).append(", %").append(rhs_reg).append("\n");
-        else if(opcode.equals("/"))binary.append("\t%").append("sdiv").append(result_reg).append(" = sdiv ").append(type).append(" %").append(lhs_reg).append(", %").append(rhs_reg).append("\n");
-        else if(opcode.equals("%"))binary.append("\t%").append("srem").append(result_reg).append(" = srem ").append(type).append(" %").append(lhs_reg).append(", %").append(rhs_reg).append("\n");
-        else if(opcode.equals("<<"))binary.append("\t%").append("shl").append(result_reg).append(" = shl ").append(type).append(" %").append(lhs_reg).append(", %").append(rhs_reg).append("\n");
-        else if(opcode.equals(">>"))binary.append("\t%").append("ashr").append(result_reg).append(" = ashr ").append(type).append(" %").append(lhs_reg).append(", %").append(rhs_reg).append("\n");
-        else if(opcode.equals("&"))binary.append("\t%").append("and").append(result_reg).append(" = and ").append(type).append(" %").append(lhs_reg).append(", %").append(rhs_reg).append("\n");
-        else if(opcode.equals("|"))binary.append("\t%").append("or").append(result_reg).append(" = or ").append(type).append(" %").append(lhs_reg).append(", %").append(rhs_reg).append("\n");
-        else if(opcode.equals("^"))binary.append("\t%").append("xor").append(result_reg).append(" = xor ").append(type).append(" %").append(lhs_reg).append(", %").append(rhs_reg).append("\n");
+        if(opcode.equals("+"))binary.append("\t%").append("add").append(result_reg).append(" = add ").append(type).append(" ").append(lhs_reg).append(", ").append(rhs_reg).append("\n");
+        else if(opcode.equals("-"))binary.append("\t%").append("sub").append(result_reg).append(" = sub ").append(type).append(" ").append(lhs_reg).append(", ").append(rhs_reg).append("\n");
+        else if(opcode.equals("*"))binary.append("\t%").append("mul").append(result_reg).append(" = mul ").append(type).append(" ").append(lhs_reg).append(", ").append(rhs_reg).append("\n");
+        else if(opcode.equals("/"))binary.append("\t%").append("sdiv").append(result_reg).append(" = sdiv ").append(type).append(" ").append(lhs_reg).append(", ").append(rhs_reg).append("\n");
+        else if(opcode.equals("%"))binary.append("\t%").append("srem").append(result_reg).append(" = srem ").append(type).append(" ").append(lhs_reg).append(", ").append(rhs_reg).append("\n");
+        else if(opcode.equals("<<"))binary.append("\t%").append("shl").append(result_reg).append(" = shl ").append(type).append(" ").append(lhs_reg).append(", ").append(rhs_reg).append("\n");
+        else if(opcode.equals(">>"))binary.append("\t%").append("ashr").append(result_reg).append(" = ashr ").append(type).append(" ").append(lhs_reg).append(", ").append(rhs_reg).append("\n");
+        else if(opcode.equals("&"))binary.append("\t%").append("and").append(result_reg).append(" = and ").append(type).append(" ").append(lhs_reg).append(", ").append(rhs_reg).append("\n");
+        else if(opcode.equals("|"))binary.append("\t%").append("or").append(result_reg).append(" = or ").append(type).append(" ").append(lhs_reg).append(", ").append(rhs_reg).append("\n");
+        else if(opcode.equals("^"))binary.append("\t%").append("xor").append(result_reg).append(" = xor ").append(type).append(" ").append(lhs_reg).append(", ").append(rhs_reg).append("\n");
+        else if(opcode.equals("=="))binary.append("\t%").append("cmp").append(result_reg).append(" = ").append("icmp eq ").append(type).append(" ").append(lhs_reg).append(", ").append(rhs_reg).append("\n");
+        else if(opcode.equals("!="))binary.append("\t%").append("cmp").append(result_reg).append(" = ").append("icmp ne ").append(type).append(" ").append(lhs_reg).append(", ").append(rhs_reg).append("\n");
+        else if(opcode.equals("<"))binary.append("\t%").append("cmp").append(result_reg).append(" = ").append("icmp slt ").append(type).append(" ").append(lhs_reg).append(", ").append(rhs_reg).append("\n");
+        else if(opcode.equals("<="))binary.append("\t%").append("cmp").append(result_reg).append(" = ").append("icmp sle ").append(type).append(" ").append(lhs_reg).append(", ").append(rhs_reg).append("\n");
+        else if(opcode.equals(">"))binary.append("\t%").append("cmp").append(result_reg).append(" = ").append("icmp sgt ").append(type).append(" ").append(lhs_reg).append(", ").append(rhs_reg).append("\n");
+        else if(opcode.equals(">="))binary.append("\t%").append("cmp").append(result_reg).append(" = ").append("icmp sge ").append(type).append(" ").append(lhs_reg).append(", ").append(rhs_reg).append("\n");
         return binary.toString();
     }
 }

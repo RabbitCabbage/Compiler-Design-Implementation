@@ -40,9 +40,6 @@ public class Scope {
     }
 
     public void defineVariable(String name, DeclarationNode delcare, Position pos) {
-//        for (String key : members.keySet()) {
-//            System.out.println(key);
-//        }
         if (members.containsKey(name))
             throw new SemanticError("variable redefined", pos);
         else members.put(name, delcare);

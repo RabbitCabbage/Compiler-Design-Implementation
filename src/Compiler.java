@@ -20,7 +20,6 @@ public class Compiler {
     public static void main(String[] args) throws Exception {
 //        InputStream input = System.in;
         InputStream input = new FileInputStream("./testcases/basic.mx");
-        //14 18 22 36 41 42 60 61 63 69 70
 //        InputStream input = new FileInputStream(args[0]);
         try {
             MxLexer lexer = new MxLexer(CharStreams.fromStream(input));

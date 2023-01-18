@@ -1,5 +1,29 @@
-int main(){
-    int[] array;
-    array = new int[3];
-    return 0;
+/*
+Test Package: Codegen
+Author: Pikachu
+Time: 2020-02-02
+Input:
+=== input ===
+79 35 12
+=== end ===
+Output:
+=== output ===
+<< 23 24 25 26 27 28 29 30 31 32 33 34 (35) 36 37 38 39 40 41 42 43 44 45 46 47 >>
+=== end ===
+ExitCode: 0
+InstLimit: -1
+Origin Package: Codeforces 399A #44003944
+*/
+int n;
+int p;
+int k;
+int i;
+int main() {
+    string debug =  "**debug for shen dong**";
+    print(debug);
+	if(1==1&&2==2)print("hellot ");
+	if(1==1&&2==3)print("hellk ");
+	if(1==2&&3==3)print("hellooo ");
+	if(1==2&&2==3)print("hello");
+	return 0;
 }

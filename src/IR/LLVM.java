@@ -22,38 +22,41 @@ public class LLVM {
         globalVars = new LinkedHashMap<>();
         stringConstants = new LinkedHashMap<>();
         this.symbols = symbols;
-        getter = new IRTypeGetter(symbols);
+        getter = new IRTypeGetter(symbols, this);
     }
     public String toDotLLVM(){
         StringBuilder text = new StringBuilder();
-        int global_string = 0;
         for(String regname: stringConstants.keySet()){
             text.append("@"+regname).append(" = private unnamed_addr constant [").append(stringConstants.get(regname).length()).append(" x i8] "+"c\""+stringConstants.get(regname)+"\""+"\n");
         }
         for(var vardef :globalVars.values()){
-            text.append("@"+vardef.declare.name+" = dso_local global "+getter.getType(vardef.declare.type,vardef.declare.dim)+" ");
+            text.append("@"+vardef.declare.name+" = dso_local global "+getter.getType(vardef.declare.type,vardef.declare.dim,null)+" ");
             if(vardef.declare.type.equals("string")){
                 text.append("getelementptr inbounds ([").append(stringConstants.get(vardef.declare.init.get_reg).length()).append(" x i8], [").append(stringConstants.get(vardef.declare.init.get_reg).length()).append(" x i8]* ").append("@"+vardef.declare.init.get_reg+", i32 0, i32 0)\n");
             }else {
-                text.append((vardef.declare.type.equals("int")?vardef.declare.init.valueIR.values.get(0).number_value:vardef.declare.init.valueIR.values.get(0).bool_value)).append("\n");
+                if(vardef.declare.init != null) {
+                    text.append((vardef.declare.type.equals("int") ? vardef.declare.init.valueIR.values.get(0).number_value : vardef.declare.init.valueIR.values.get(0).bool_value)).append("\n");
+                }else {
+                    text.append("0\n");
+                }
             }
         }
         for(var clsdef: classes.values()){
             text.append("%struct.").append(clsdef.classdef.name).append(" = type {");
             for(var vardef: clsdef.classdef.variablemap.values()){
-                text.append(getter.getType(vardef.type,vardef.dim)+"*").append(", ");
+                text.append(getter.getType(vardef.type,vardef.dim,null)+"*").append(", ");
             }
             text.deleteCharAt(text.length()-1);
             text.deleteCharAt(text.length()-1);
             text.append("}\n");
             for(FunctionIR fcdef: clsdef.methods){
-                text.append("define ").append(getter.getType(fcdef.funcdef.returntype,fcdef.funcdef.returndim)).append(" @").append(fcdef.funcdef.name).append("(");
+                text.append("define ").append(getter.getType(fcdef.funcdef.returntype,fcdef.funcdef.returndim,null)).append(" @").append(fcdef.funcdef.name).append("(");
                 int count = 0;
                 text.append("%struct.").append(clsdef.classdef.name).append(" %").append(count);
                 count = count + 1;
                 text.append(", ");
                 for(ParameterNode para: fcdef.funcdef.parameterlist){
-                    text.append(getter.getType(para.type,para.dim)).append(" %").append(count);
+                    text.append(getter.getType(para.type,para.dim,null)).append(" %").append(count);
                     count = count + 1;
                     text.append(", ");
                 }
@@ -71,13 +74,13 @@ public class LLVM {
             }
         }
         text.append("\n");
-//        System.out.println(text.toString());
-//        System.out.println("****************************************");
+        //System.out.println(text.toString());
+        //System.out.println("****************************************");
         for(var fcdef: functions.values()){
-            text.append("define ").append(getter.getType(fcdef.funcdef.returntype,fcdef.funcdef.returndim)).append(" @").append(fcdef.funcdef.name).append("(");
+            text.append("define ").append(getter.getType(fcdef.funcdef.returntype,fcdef.funcdef.returndim,null)).append(" @").append(fcdef.funcdef.name).append("(");
             int count = 0;
             for(ParameterNode para: fcdef.funcdef.parameterlist){
-                text.append(getter.getType(para.type,para.dim)).append(" %").append(para.declare.name);
+                text.append(getter.getType(para.type,para.dim,null)).append(" %").append(para.declare.name);
                 count = count + 1;
                 text.append(", ");
             }
@@ -89,6 +92,7 @@ public class LLVM {
             if(fcdef.funcdef.stmts != null){
                 //先把所有的statment收集到StatementIR里面
                 fcdef.blocks.forEach(a->{
+                    //System.out.println("new block");
                     text.append(a.block_id).append(":\n");
                     a.instrs.forEach(b->text.append(b.toString()));
                 });
