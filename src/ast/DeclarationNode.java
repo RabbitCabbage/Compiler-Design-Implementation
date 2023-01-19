@@ -7,6 +7,7 @@ public class DeclarationNode extends ASTNode{
     public String type;
     public int dim;//如果是数组将具有这个int作为维度。
     public ClassDefNode belong = null;
+    public String info_for_global = null;
 
     public DeclarationNode(String name,ExpressionNode expr,Position pos){
         super(pos);

@@ -7,6 +7,7 @@ import ast.*;
 import frontend.Symbols;
 import parser.MxParser;
 
+import java.util.Objects;
 import java.util.Stack;
 
 public class IRBuilder extends ASTVisitor {
@@ -65,7 +66,15 @@ public class IRBuilder extends ASTVisitor {
     public void visit(DeclarationNode it) {
         String name = it.name;
         if (current_block == null) {
-            if (it.init != null) it.init.accept(this);
+            StringBuilder global_info = new StringBuilder();
+            global_info.append("@"+it.name);
+            if (it.init != null) {
+                it.init.accept(this);
+                global_info.append(" = dso_local global ").append(it.init.info_for_global_var).append("\n");
+            }else{
+                global_info.append(" = dso_local global ").append(getter.getType(it.type,it.dim,null)).append(" 0\n");
+            }
+            it.info_for_global = global_info.toString();
             return;
         }
         if (it.init != null) {
@@ -142,6 +151,7 @@ public class IRBuilder extends ASTVisitor {
         String cond = it.condition.get_reg;
         StringBuilder count = new StringBuilder();
         count.append(if_statement_count);
+        if_statement_count++;
         BlockIR then_block = new BlockIR("if.then" + count.toString());
         BlockIR else_block = new BlockIR("if.else" + count.toString());
         BlockIR next_block = new BlockIR("if.end" + count.toString());
@@ -180,7 +190,6 @@ public class IRBuilder extends ASTVisitor {
         }
 
         current_block = next_block;
-        if_statement_count++;
     }
 
     @Override
@@ -352,6 +361,11 @@ public class IRBuilder extends ASTVisitor {
             //System.out.println(unit.number_value);
             it.valueIR.values.add(unit);
             it.get_value = true;
+            if(current_function== null){
+                StringBuilder info = new StringBuilder();
+                info.append("i8* getelementptr inbounds ([").append(it.primaryExpression.length()).append(" x i8], [").append(it.primaryExpression.length()).append(" x i8]* @").append(it.get_reg).append(", i32 0,i32 0)");
+                it.info_for_global_var = info.toString();
+            }
         }
         if (it.exprtype == PrimaryExpressionNode.ExpressionType.integerLiteralExpr) {
             ValueUnit unit = new ValueUnit(Integer.parseInt(it.primaryExpression), null, null);
@@ -359,16 +373,159 @@ public class IRBuilder extends ASTVisitor {
             //System.out.println(unit.number_value);
             it.valueIR.values.add(unit);
             it.get_value = true;
+            if(current_function == null){
+                StringBuilder info = new StringBuilder();
+                info.append("i32 ").append(it.primaryExpression);
+                it.info_for_global_var = info.toString();
+            }
         }
         if (it.exprtype == PrimaryExpressionNode.ExpressionType.boolLiteralExpr) {
             ValueUnit unit = new ValueUnit(null, null, Boolean.parseBoolean(it.primaryExpression));
             it.valueIR.values.add(unit);
             it.get_value = true;
+            it.valueIR.values.add(unit);
+            it.get_value = true;
+            if(current_function == null){
+                StringBuilder info = new StringBuilder();
+                info.append("i1 ").append(it.primaryExpression);
+            }
         }
     }
 
     @Override
     public void visit(BinaryExpressionNode it) {
+        if(current_function == null){
+            it.lhs.accept(this);
+            it.rhs.accept(this);
+            it.get_value = true;
+            StringBuilder info = new StringBuilder();
+            if(it.opcode.equals("/")) {
+                ValueUnit unit = new ValueUnit(it.lhs.valueIR.values.get(0).number_value/it.rhs.valueIR.values.get(0).number_value,null,null);
+                it.valueIR.values.add(unit);
+                info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).number_value/it.rhs.valueIR.values.get(0).number_value);
+            } else if(it.opcode.equals("*")) {
+                ValueUnit unit = new ValueUnit(it.lhs.valueIR.values.get(0).number_value*it.rhs.valueIR.values.get(0).number_value,null,null);
+                it.valueIR.values.add(unit);
+                info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).number_value*it.rhs.valueIR.values.get(0).number_value);
+            }else if(it.opcode.equals("%")) {
+                ValueUnit unit = new ValueUnit(it.lhs.valueIR.values.get(0).number_value%it.rhs.valueIR.values.get(0).number_value,null,null);
+                it.valueIR.values.add(unit);
+                info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).number_value%it.rhs.valueIR.values.get(0).number_value);
+            }else if(it.opcode.equals("+")) {
+                if(it.type.equals("int")){
+                   ValueUnit unit = new ValueUnit(it.lhs.valueIR.values.get(0).number_value+it.rhs.valueIR.values.get(0).number_value,null,null);
+                   it.valueIR.values.add(unit);
+                    info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).number_value+it.rhs.valueIR.values.get(0).number_value);
+               }
+               else if(it.type.equals("string")){
+                   ValueUnit unit = new ValueUnit(null,it.lhs.valueIR.values.get(0).string_value+it.rhs.valueIR.values.get(0).string_value,null);
+                   it.valueIR.values.add(unit);
+                    info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).string_value).append(it.rhs.valueIR.values.get(0).string_value);
+               }
+            }else if(it.opcode.equals("-")) {
+                ValueUnit unit = new ValueUnit(it.lhs.valueIR.values.get(0).number_value-it.rhs.valueIR.values.get(0).number_value,null,null);
+                it.valueIR.values.add(unit);
+                info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).number_value-it.rhs.valueIR.values.get(0).number_value);
+            }else if(it.opcode.equals("<<")) {
+                ValueUnit unit = new ValueUnit(it.lhs.valueIR.values.get(0).number_value<<it.rhs.valueIR.values.get(0).number_value,null,null);
+                it.valueIR.values.add(unit);
+                info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).number_value<<it.rhs.valueIR.values.get(0).number_value);
+            }else if(it.opcode.equals(">>")) {
+                ValueUnit unit = new ValueUnit(it.lhs.valueIR.values.get(0).number_value>>it.rhs.valueIR.values.get(0).number_value,null,null);
+                it.valueIR.values.add(unit);
+                info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).number_value>>it.rhs.valueIR.values.get(0).number_value);
+            }else if(it.opcode.equals("&")) {
+                ValueUnit unit = new ValueUnit(it.lhs.valueIR.values.get(0).number_value&it.rhs.valueIR.values.get(0).number_value,null,null);
+                it.valueIR.values.add(unit);
+                info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).number_value&it.rhs.valueIR.values.get(0).number_value);
+            }else if(it.opcode.equals("|")) {
+                ValueUnit unit = new ValueUnit(it.lhs.valueIR.values.get(0).number_value|it.rhs.valueIR.values.get(0).number_value,null,null);
+                it.valueIR.values.add(unit);
+                info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).number_value|it.rhs.valueIR.values.get(0).number_value);
+            }else if(it.opcode.equals("^")) {
+                ValueUnit unit = new ValueUnit(it.lhs.valueIR.values.get(0).number_value^it.rhs.valueIR.values.get(0).number_value,null,null);
+                it.valueIR.values.add(unit);
+                info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).number_value^it.rhs.valueIR.values.get(0).number_value);
+            }else if(it.opcode.equals("<")) {
+                if(it.type.equals("int")) {
+                    ValueUnit unit = new ValueUnit(null, null, it.lhs.valueIR.values.get(0).number_value < it.rhs.valueIR.values.get(0).number_value);
+                    it.valueIR.values.add(unit);
+                    info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).number_value<it.rhs.valueIR.values.get(0).number_value);
+                }else if(it.type.equals("string")){
+                    ValueUnit unit = new ValueUnit(null, null, it.lhs.valueIR.values.get(0).string_value.compareTo(it.rhs.valueIR.values.get(0).string_value)<0);
+                    it.valueIR.values.add(unit);
+                    info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).string_value.compareTo(it.rhs.valueIR.values.get(0).string_value)<0);
+                }
+            }else if(it.opcode.equals(">")) {
+                if(it.type.equals("int")) {
+                    ValueUnit unit = new ValueUnit(null, null, it.lhs.valueIR.values.get(0).number_value > it.rhs.valueIR.values.get(0).number_value);
+                    it.valueIR.values.add(unit);
+                    info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).number_value>it.rhs.valueIR.values.get(0).number_value);
+                }else if(it.type.equals("string")){
+                    ValueUnit unit = new ValueUnit(null, null, it.lhs.valueIR.values.get(0).string_value.compareTo(it.rhs.valueIR.values.get(0).string_value)>0);
+                    it.valueIR.values.add(unit);
+                    info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).string_value.compareTo(it.rhs.valueIR.values.get(0).string_value)>0);
+                }
+            }else if(it.opcode.equals("<=")) {
+                if(it.type.equals("int")) {
+                    ValueUnit unit = new ValueUnit(null, null, it.lhs.valueIR.values.get(0).number_value <= it.rhs.valueIR.values.get(0).number_value);
+                    it.valueIR.values.add(unit);
+                    info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).number_value<=it.rhs.valueIR.values.get(0).number_value);
+                }else if(it.type.equals("string")){
+                    ValueUnit unit = new ValueUnit(null, null, it.lhs.valueIR.values.get(0).string_value.compareTo(it.rhs.valueIR.values.get(0).string_value)<=0);
+                    it.valueIR.values.add(unit);
+                    info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).string_value.compareTo(it.rhs.valueIR.values.get(0).string_value)<=0);
+                }
+            }else if(it.opcode.equals(">=")) {
+                if(it.type.equals("int")) {
+                    ValueUnit unit = new ValueUnit(null, null, it.lhs.valueIR.values.get(0).number_value >= it.rhs.valueIR.values.get(0).number_value);
+                    it.valueIR.values.add(unit);
+                    info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).number_value>=it.rhs.valueIR.values.get(0).number_value);
+                }else if(it.type.equals("string")){
+                    ValueUnit unit = new ValueUnit(null, null, it.lhs.valueIR.values.get(0).string_value.compareTo(it.rhs.valueIR.values.get(0).string_value)>=0);
+                    it.valueIR.values.add(unit);
+                    info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).string_value.compareTo(it.rhs.valueIR.values.get(0).string_value)>=0);
+                }
+            }else if(it.opcode.equals("==")) {
+                if(it.type.equals("int")) {
+                    ValueUnit unit = new ValueUnit(null, null, Objects.equals(it.lhs.valueIR.values.get(0).number_value, it.rhs.valueIR.values.get(0).number_value));
+                    it.valueIR.values.add(unit);
+                    info.append(getter.getType(it.type,it.dim,null)).append(" ").append(Objects.equals(it.lhs.valueIR.values.get(0).number_value, it.rhs.valueIR.values.get(0).number_value));
+                }else if(it.type.equals("string")){
+                    ValueUnit unit = new ValueUnit(null, null, it.lhs.valueIR.values.get(0).string_value.compareTo(it.rhs.valueIR.values.get(0).string_value)==0);
+                    it.valueIR.values.add(unit);
+                    info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).string_value.compareTo(it.rhs.valueIR.values.get(0).string_value)==0);
+                }else if(it.type.equals("bool")){
+                    ValueUnit unit = new ValueUnit(null,null,it.lhs.valueIR.values.get(0).bool_value==it.rhs.valueIR.values.get(0).bool_value);
+                    it.valueIR.values.add(unit);
+                    info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).bool_value==it.rhs.valueIR.values.get(0).bool_value);
+                }
+            }else if(it.opcode.equals("!=")) {
+                if(it.type.equals("int")) {
+                    ValueUnit unit = new ValueUnit(null, null, !Objects.equals(it.lhs.valueIR.values.get(0).number_value, it.rhs.valueIR.values.get(0).number_value));
+                    it.valueIR.values.add(unit);
+                    info.append(getter.getType(it.type,it.dim,null)).append(" ").append(!Objects.equals(it.lhs.valueIR.values.get(0).number_value, it.rhs.valueIR.values.get(0).number_value));
+                }else if(it.type.equals("string")){
+                    ValueUnit unit = new ValueUnit(null, null, it.lhs.valueIR.values.get(0).string_value.compareTo(it.rhs.valueIR.values.get(0).string_value)!=0);
+                    it.valueIR.values.add(unit);
+                    info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).string_value.compareTo(it.rhs.valueIR.values.get(0).string_value)!=0);
+                }if(it.type.equals("bool")){
+                    ValueUnit unit = new ValueUnit(null,null,it.lhs.valueIR.values.get(0).bool_value!=it.rhs.valueIR.values.get(0).bool_value);
+                    it.valueIR.values.add(unit);
+                    info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).bool_value!=it.rhs.valueIR.values.get(0).bool_value);
+                }
+            }else if(it.opcode.equals("&&")) {
+                ValueUnit unit = new ValueUnit(null,null,it.lhs.valueIR.values.get(0).bool_value&&it.rhs.valueIR.values.get(0).bool_value);
+                it.valueIR.values.add(unit);
+                info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).bool_value&&it.rhs.valueIR.values.get(0).bool_value);
+            }else if(it.opcode.equals("||")) {
+                ValueUnit unit = new ValueUnit(null,null,it.lhs.valueIR.values.get(0).bool_value||it.rhs.valueIR.values.get(0).bool_value);
+                it.valueIR.values.add(unit);
+                info.append(getter.getType(it.type,it.dim,null)).append(" ").append(it.lhs.valueIR.values.get(0).bool_value||it.rhs.valueIR.values.get(0).bool_value);
+            }
+            it.info_for_global_var = info.toString();
+            return ;
+        }
         if(it.opcode.equals("&&")){
             StringBuilder count = new StringBuilder();
             count.append(short_cut_count++);
@@ -413,7 +570,7 @@ public class IRBuilder extends ASTVisitor {
             it.lhs.accept(this);
             String lhs_reg;
             if (it.lhs.get_value) {
-                if (it.lhs.type.equals("int")) lhs_reg = it.lhs.valueIR.values.get(0).number_value.toString();
+                if (it.lhs.type.equals("int")) lhs_reg = it.lhs.valueIR.values.get(0).toString();
                 else if (it.lhs.type.equals("string"))
                     lhs_reg = "\"" + it.lhs.valueIR.values.get(0).string_value.toString() + "\"";
                 else lhs_reg = it.lhs.valueIR.values.get(0).bool_value.toString();
@@ -544,7 +701,21 @@ public class IRBuilder extends ASTVisitor {
     }
     @Override
     public void visit(NewExpressionNode it) {
-        CallInstruction call = new CallInstruction(getter.getType(it.type, it.dim,null), "malloc_", current_function.reg_count++);
-        current_block.addInstruction(call);
+        if(current_function != null) {
+            CallInstruction call = new CallInstruction(getter.getType(it.type, it.dim, null), "malloc_", current_function.reg_count++);
+            current_block.addInstruction(call);
+        } else {
+            StringBuilder info = new StringBuilder();
+            it.expression.forEach(a-> {
+                a.accept(this);
+                String[]  strs=a.info_for_global_var.split(" ");
+                StringBuilder value = new StringBuilder();
+                for(int i=1,len=strs.length;i<len;i++){
+                    value.append(strs[i].toString());
+                }
+                info.append(" [").append(value).append(" x ").append(getter.getType(it.type, it.dim, null)).append("] zeroinitializer");
+            });
+            it.info_for_global_var = info.toString();
+        }
     }
 }

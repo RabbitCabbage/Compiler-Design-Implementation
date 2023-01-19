@@ -30,16 +30,7 @@ public class LLVM {
             text.append("@"+regname).append(" = private unnamed_addr constant [").append(stringConstants.get(regname).length()).append(" x i8] "+"c\""+stringConstants.get(regname)+"\""+"\n");
         }
         for(var vardef :globalVars.values()){
-            text.append("@"+vardef.declare.name+" = dso_local global "+getter.getType(vardef.declare.type,vardef.declare.dim,null)+" ");
-            if(vardef.declare.type.equals("string")){
-                text.append("getelementptr inbounds ([").append(stringConstants.get(vardef.declare.init.get_reg).length()).append(" x i8], [").append(stringConstants.get(vardef.declare.init.get_reg).length()).append(" x i8]* ").append("@"+vardef.declare.init.get_reg+", i32 0, i32 0)\n");
-            }else {
-                if(vardef.declare.init != null) {
-                    text.append((vardef.declare.type.equals("int") ? vardef.declare.init.valueIR.values.get(0).number_value : vardef.declare.init.valueIR.values.get(0).bool_value)).append("\n");
-                }else {
-                    text.append("0\n");
-                }
-            }
+            text.append(vardef.declare.info_for_global);
         }
         for(var clsdef: classes.values()){
             text.append("%struct.").append(clsdef.classdef.name).append(" = type {");
