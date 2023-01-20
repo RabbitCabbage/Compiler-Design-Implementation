@@ -16,11 +16,15 @@ InstLimit: -1
 Origin Package: Codeforces 1145A #52445759
 */
 int n;
-int m = 3;
-int k = 3 * 4;
-string hello = "hello";
 int[] a = new int[20];
+int ask(int i){
+ return  a[i];
+}
+int i;
 int main(){
-
+	n = getInt();
+	a[n] = 88;
+	n = ask(n);
+	printInt(n);
 	return 0;
 }

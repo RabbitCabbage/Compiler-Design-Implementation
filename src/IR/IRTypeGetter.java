@@ -21,9 +21,9 @@ public class IRTypeGetter {
                 type.append("[").append(llvm.stringConstants.get(reg_name).length()).append(" x i8]*");
             }else type.append("i8*");
         }
-        else if(typename.equals("bool"))type.append(typename);
+        else if(typename.equals("bool"))type.append("i1");
         else type.append("%struct."+typename);
-        for(int i=0;i<i;++i){
+        for(int i=0;i<dim;++i){
             type.append("*");
         }
         return type.toString();

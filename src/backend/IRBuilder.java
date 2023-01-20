@@ -22,6 +22,8 @@ public class IRBuilder extends ASTVisitor {
     public int string_constant_count;
     public int short_cut_count;
     public String last_expression_name;//记下的是上一个访问到的identifier的名字
+    public int sext_instr_count;
+    public int bracket_count;
 
     public IRBuilder(Symbols symbols) {
         this.symbols = symbols;
@@ -34,6 +36,8 @@ public class IRBuilder extends ASTVisitor {
         binary_expression_count = 0;
         string_constant_count = 0;
         loop_stack = new Stack<>();
+        sext_instr_count = 0;
+        bracket_count = 0;
     }
 
     public FunctionIR current_function;//用来记下现在正在处理的函数，以便于给这个函数加block
@@ -116,7 +120,7 @@ public class IRBuilder extends ASTVisitor {
             current_block.addInstruction(alloca);
         });
         it.parameterlist.forEach(a -> {
-            StoreInstruction store = new StoreInstruction(a.declare.name, getter.getType(a.type, a.dim,null), a.declare.name + ".addr",getter.getType(a.type, a.dim,null),llvm.globalVars.containsKey(a.declare.name)||llvm.stringConstants.containsKey(a.declare.name));
+            StoreInstruction store = new StoreInstruction(a.declare.name, getter.getType(a.type, a.dim,null), a.declare.name + ".addr",getter.getType(a.type, a.dim,null),llvm.globalVars.containsKey(a.declare.name+".addr")||llvm.stringConstants.containsKey(a.declare.name+".addr"));
             current_block.addInstruction(store);
         });
         it.stmts.accept(this);//访问每一个具体的语句，把它翻译成llvm
@@ -333,8 +337,8 @@ public class IRBuilder extends ASTVisitor {
         if (it.exprtype == PrimaryExpressionNode.ExpressionType.identifierExpr) {
             // todo if there is a var of the same name shadowing the parameters
             // todo global variables should be referenced to by @
-            if (!it.visited_as_lhs) {
-                LoadInstruction load = new LoadInstruction(current_function.reg_count++, (current_function.para_names.contains(it.primaryExpression) ? (it.primaryExpression + ".addr") : it.primaryExpression), getter.getType(it.type, it.dim,null),llvm.globalVars.containsKey(it.primaryExpression)||llvm.stringConstants.containsKey(it.primaryExpression));
+            if (!it.visited_as_lhs && it.dim == 0) {
+                LoadInstruction load = new LoadInstruction(current_function.reg_count++, (current_function.para_names.contains(it.primaryExpression) ? (it.primaryExpression + ".addr") : it.primaryExpression), getter.getType(it.type, it.dim,null),llvm.globalVars.containsKey((current_function.para_names.contains(it.primaryExpression) ? (it.primaryExpression + ".addr") : it.primaryExpression))||llvm.stringConstants.containsKey((current_function.para_names.contains(it.primaryExpression) ? (it.primaryExpression + ".addr") : it.primaryExpression)));
                 current_block.addInstruction(load);
                 StringBuilder tmp = new StringBuilder();
                 tmp.append(current_function.reg_count - 1);
@@ -384,7 +388,6 @@ public class IRBuilder extends ASTVisitor {
             it.valueIR.values.add(unit);
             it.get_value = true;
             it.valueIR.values.add(unit);
-            it.get_value = true;
             if(current_function == null){
                 StringBuilder info = new StringBuilder();
                 info.append("i1 ").append(it.primaryExpression);
@@ -713,9 +716,41 @@ public class IRBuilder extends ASTVisitor {
                 for(int i=1,len=strs.length;i<len;i++){
                     value.append(strs[i].toString());
                 }
-                info.append(" [").append(value).append(" x ").append(getter.getType(it.type, it.dim, null)).append("] zeroinitializer");
+                info.append(" [").append(value).append(" x ").append(getter.getType(it.type, it.dim - 1, null)).append("] zeroinitializer");
             });
             it.info_for_global_var = info.toString();
+        }
+    }
+    @Override
+    public void visit(ParenExpressionNode it){
+        it.expression.accept(this);
+    }
+
+    @Override
+    public void visit(ArrayIndexExpressionNode it){
+        it.offset.accept(this);
+        it.object.accept(this);
+        String sext_res_reg;
+        if(it.get_value){
+            SextInstruction sext = new SextInstruction(it.valueIR.values.get(0).number_value,sext_instr_count++);
+            current_block.addInstruction(sext);
+            sext_res_reg = sext.res_toString();
+        }else {
+            SextInstruction sext = new SextInstruction(it.offset.get_reg,sext_instr_count++,llvm.globalVars.containsKey(it.offset.get_reg));
+            current_block.addInstruction(sext);
+            sext_res_reg = sext.res_toString();
+        }
+        GetElementPtrInstruction gep = new GetElementPtrInstruction(it.object.get_reg, getter.getType(it.object.type,it.object.dim-1, it.object.get_reg),sext_res_reg, 0,bracket_count++, llvm.globalVars.containsKey(it.object.get_reg));
+        current_block.addInstruction(gep);
+        if(it.visited_as_lhs){
+            it.get_reg = gep.res_toString();
+        }
+        else {
+            LoadInstruction load = new LoadInstruction(current_function.reg_count++,gep.res_toString(),getter.getType(it.type,it.dim-1,null),false);
+            current_block.addInstruction(load);
+            StringBuilder res = new StringBuilder();
+            res.append(current_function.reg_count-1);
+            it.get_reg = res.toString();
         }
     }
 }
