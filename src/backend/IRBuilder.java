@@ -5,7 +5,6 @@ import IR.IRTypeGetter;
 import IR.Instruction.*;
 import ast.*;
 import frontend.Symbols;
-import parser.MxParser;
 
 import java.util.Objects;
 import java.util.Stack;
@@ -84,7 +83,7 @@ public class IRBuilder extends ASTVisitor {
         if (it.init != null) {
             it.init.accept(this);
             String type = getter.getType(it.init.type,it.init.dim,it.init.get_reg);
-            System.out.println(type);
+            //System.out.println(type);
             AllocaInstruction alloc = new AllocaInstruction(name, getter.getType(it.type,it.dim,null));
             current_block.addInstruction(alloc);
             if (it.init.get_value) {
@@ -100,6 +99,7 @@ public class IRBuilder extends ASTVisitor {
                 else  store = new StoreInstruction(unit, type, name,llvm.globalVars.containsKey(name)||llvm.stringConstants.containsKey(name));
                 current_block.addInstruction(store);
             } else {
+                //System.out.println(it.init.get_reg);
                 StoreInstruction store = new StoreInstruction(it.init.get_reg, type, name,getter.getType(it.type,it.dim,null),llvm.globalVars.containsKey(name)||llvm.stringConstants.containsKey(name));
                 current_block.addInstruction(store);
             }
@@ -705,19 +705,30 @@ public class IRBuilder extends ASTVisitor {
     @Override
     public void visit(NewExpressionNode it) {
         if(current_function != null) {
+            it.expression.forEach(a->{
+                a.accept(this);
+                System.out.println(a.valueIR.values.get(0).number_value);
+            });
             CallInstruction call = new CallInstruction(getter.getType(it.type, it.dim, null), "malloc_", current_function.reg_count++);
             current_block.addInstruction(call);
+            StringBuilder call_reg = new StringBuilder();
+            call_reg.append("call").append(call.call_reg);
+            it.get_reg = call_reg.toString();
         } else {
             StringBuilder info = new StringBuilder();
             it.expression.forEach(a-> {
+                info.append(" [");
                 a.accept(this);
                 String[]  strs=a.info_for_global_var.split(" ");
                 StringBuilder value = new StringBuilder();
                 for(int i=1,len=strs.length;i<len;i++){
                     value.append(strs[i].toString());
                 }
-                info.append(" [").append(value).append(" x ").append(getter.getType(it.type, it.dim - 1, null)).append("] zeroinitializer");
+                info.append(value).append(" x ");
             });
+            info.append(getter.getType(it.type, it.dim - it.expression.size(), null));
+            for(int i=0;i<it.expression.size();++i)info.append("]");
+            info.append(" zeroinitializer");
             it.info_for_global_var = info.toString();
         }
     }
@@ -731,8 +742,8 @@ public class IRBuilder extends ASTVisitor {
         it.offset.accept(this);
         it.object.accept(this);
         String sext_res_reg;
-        if(it.get_value){
-            SextInstruction sext = new SextInstruction(it.valueIR.values.get(0).number_value,sext_instr_count++);
+        if(it.offset.get_value){
+            SextInstruction sext = new SextInstruction(it.offset.valueIR.values.get(0).number_value,sext_instr_count++);
             current_block.addInstruction(sext);
             sext_res_reg = sext.res_toString();
         }else {

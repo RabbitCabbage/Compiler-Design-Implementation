@@ -10,11 +10,13 @@ public class StoreInstruction extends InstructionIR {
     String name;
     String reg = null;
     boolean destination_global;
+    boolean get_value;
     public StoreInstruction(ValueUnit value,String to_type,String name,boolean global) {
         this.value = value;
         this.to_type  = to_type;
         this.name = name;
         this.destination_global = global;
+        get_value = true;
     }
 
     public StoreInstruction(String reg,String reg_type,String name,String name_type, boolean global){
@@ -22,11 +24,12 @@ public class StoreInstruction extends InstructionIR {
         from_type = reg_type;
         to_type = name_type;
         this.name = name;
+        get_value = false;
         this.destination_global = global;
     }
     public String toString(){
         StringBuilder store = new StringBuilder();
-        if(reg == null){
+        if(get_value){
             if(to_type.equals("i32")) store.append("\tstore ").append(to_type).append(" ").append(value.number_value).append(", ").append(to_type);
             else if(to_type.equals("string")||to_type.equals("i8*")) store.append("\tstore ").append(to_type).append(" ").append(value.string_value).append(", ").append(to_type);
             else if(to_type.equals("i1")) store.append("\tstore ").append(to_type).append(" ").append(value.bool_value).append(", ").append(to_type);

@@ -1,30 +1,21 @@
 /*
-Test Package: Codegen
-Author: Pikachu
-Time: 2020-02-02
-Input:
-=== input ===
-8
-11 12 1 2 13 14 3 4
-=== end ===
-Output:
-=== output ===
-2
-=== end ===
-ExitCode: 0
-InstLimit: -1
-Origin Package: Codeforces 1145A #52445759
-*/
-int n;
-int[] a = new int[20];
-int ask(int i){
- return  a[i];
-}
-int i;
 int main(){
-	n = getInt();
-	a[n] = 88;
-	n = ask(n);
-	printInt(n);
+    int[][] graph = new int[3][];
+    graph[0] = new int[4];
+    graph[1] = new int[4];
+    graph[2] = new int[4];
+    int[][] graph = new int[3][4];
+    int a,b;
+    a = getInt();
+    b = getInt();
+    graph[a][b] = 9;
+    graph[a+1][b+1] = graph[a][b];
+    printInt(graph[a+1][b+1]);
+	return 0;
+}
+*/
+int[][][] a = new int[2][3][4];
+int main(){
+	int[][][] b = new int[2][3][4];
 	return 0;
 }
