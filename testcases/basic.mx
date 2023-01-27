@@ -1,21 +1,36 @@
-/*
 int main(){
     int[][] graph = new int[3][];
     graph[0] = new int[4];
     graph[1] = new int[4];
     graph[2] = new int[4];
-    int[][] graph = new int[3][4];
-    int a,b;
-    a = getInt();
-    b = getInt();
-    graph[a][b] = 9;
-    graph[a+1][b+1] = graph[a][b];
-    printInt(graph[a+1][b+1]);
+    for(int i = 0;i < 3; ++i){
+        for(int j = 0;j< 4;++j){
+            graph[i][j] = i*10 +j;
+        }
+    }
+    for(int k = 0;k < 3; ++k){
+            for(int q = 0;q< 4;++q){
+                printInt(graph[k][q]);
+                print(" ");
+            }
+            print("\n");
+    }
 	return 0;
 }
-*/
+/*
 int[][][] a = new int[2][3][4];
 int main(){
+    //int [] a = new int [3];
+    //int [][] d = new int [3][4];
 	int[][][] b = new int[2][3][4];
+	a[0][1][2] = 5;
+	b[0][1][2] = 5;
 	return 0;
 }
+
+int main(){
+    int[][][] aa = new int[5][6][7];
+    aa[3][4][5] = 99;
+    printInt(aa[3][4][5]);
+    return 0;
+}*/

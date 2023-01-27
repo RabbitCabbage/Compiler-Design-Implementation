@@ -5,7 +5,10 @@ import IR.IRTypeGetter;
 import IR.Instruction.*;
 import ast.*;
 import frontend.Symbols;
+import util.Position;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.Stack;
 
@@ -23,6 +26,8 @@ public class IRBuilder extends ASTVisitor {
     public String last_expression_name;//记下的是上一个访问到的identifier的名字
     public int sext_instr_count;
     public int bracket_count;
+    public int new_alternative_count;
+    public int new_loop_count;
 
     public IRBuilder(Symbols symbols) {
         this.symbols = symbols;
@@ -37,6 +42,8 @@ public class IRBuilder extends ASTVisitor {
         loop_stack = new Stack<>();
         sext_instr_count = 0;
         bracket_count = 0;
+        new_alternative_count = 0;
+        new_loop_count = 0;
     }
 
     public FunctionIR current_function;//用来记下现在正在处理的函数，以便于给这个函数加block
@@ -337,7 +344,7 @@ public class IRBuilder extends ASTVisitor {
         if (it.exprtype == PrimaryExpressionNode.ExpressionType.identifierExpr) {
             // todo if there is a var of the same name shadowing the parameters
             // todo global variables should be referenced to by @
-            if (!it.visited_as_lhs && it.dim == 0) {
+            if (!it.visited_as_lhs) {
                 LoadInstruction load = new LoadInstruction(current_function.reg_count++, (current_function.para_names.contains(it.primaryExpression) ? (it.primaryExpression + ".addr") : it.primaryExpression), getter.getType(it.type, it.dim,null),llvm.globalVars.containsKey((current_function.para_names.contains(it.primaryExpression) ? (it.primaryExpression + ".addr") : it.primaryExpression))||llvm.stringConstants.containsKey((current_function.para_names.contains(it.primaryExpression) ? (it.primaryExpression + ".addr") : it.primaryExpression)));
                 current_block.addInstruction(load);
                 StringBuilder tmp = new StringBuilder();
@@ -705,15 +712,98 @@ public class IRBuilder extends ASTVisitor {
     @Override
     public void visit(NewExpressionNode it) {
         if(current_function != null) {
-            it.expression.forEach(a->{
-                a.accept(this);
-                System.out.println(a.valueIR.values.get(0).number_value);
-            });
-            CallInstruction call = new CallInstruction(getter.getType(it.type, it.dim, null), "malloc_", current_function.reg_count++);
-            current_block.addInstruction(call);
-            StringBuilder call_reg = new StringBuilder();
-            call_reg.append("call").append(call.call_reg);
-            it.get_reg = call_reg.toString();
+            if(it.expression.size()==1){
+                ExpressionNode first = it.expression.get(0);
+                first.accept(this);
+                CallInstruction call = new CallInstruction("i8*", "malloc_", call_statement_count++);
+                StringBuilder para = new StringBuilder();
+                para.append("i32 ").append(first.valueIR.values.get(0).number_value*getter.getSize(it.type,it.dim));
+                call.para.add(para.toString());
+                current_block.addInstruction(call);
+                StringBuilder call_reg = new StringBuilder();
+                call_reg.append("call").append(call.call_reg);
+                BitcastInstruction bitcast = new BitcastInstruction("i8*",getter.getType(it.type, it.dim, null),call_reg.toString(),current_function.reg_count++);
+                it.get_reg = bitcast.res_toString();
+                current_block.addInstruction(bitcast);
+                //System.out.println(bitcast.res_toString());
+            } else if(it.expression.size()>1){
+                    Position pos = it.expression.get(0).pos;//记下位置
+                    StringBuilder alter_name = new StringBuilder();
+                    alter_name.append("alter").append(new_alternative_count++);
+                    DeclarationNode alter = new DeclarationNode(alter_name.toString(),null,pos);
+                    alter.type = it.type;
+                    alter.dim = it.dim;
+                    // int*** alter
+                    PrimaryExpressionNode array = new PrimaryExpressionNode(it.pos,alter_name.toString());
+                    array.exprtype = PrimaryExpressionNode.ExpressionType.identifierExpr;
+                    array.type = alter.type;
+                    array.dim = alter.dim;//新建一个数组对象，并且把这一维给它new好
+                    NewExpressionNode first_nnew = new NewExpressionNode(pos,alter.type,alter.dim);
+                    first_nnew.expression.add(it.expression.get(0));
+                    AssignmentExpressionNode first_ass = new AssignmentExpressionNode(array,first_nnew,pos);
+                    // alter = new int** [3]
+                StringBuilder counter_name = new StringBuilder();
+                counter_name.append("count").append(new_loop_count++);//新建一个计数变量的名称
+
+                VariableDefNode vardef = new VariableDefNode("int",pos,0);
+                vardef.is_global = false;
+                vardef.typename = "int";
+                vardef.dim = 0;
+                PrimaryExpressionNode zero = new PrimaryExpressionNode(pos,"0");
+                zero.exprtype = PrimaryExpressionNode.ExpressionType.integerLiteralExpr;
+                zero.type = "int";
+                zero.dim = 0;
+                DeclarationNode dec = new DeclarationNode(counter_name.toString(),zero,pos);
+                dec.type = "int";
+                dec.dim = 0;
+                vardef.declarations.add(dec);
+                // int counter = 0;
+
+                ExpressionNode init = null;
+
+                PrimaryExpressionNode lhs = new PrimaryExpressionNode(pos,counter_name.toString());
+                lhs.exprtype = PrimaryExpressionNode.ExpressionType.identifierExpr;
+                lhs.type = "int";
+                lhs.dim = 0;
+                BinaryExpressionNode cond = new BinaryExpressionNode(lhs,it.expression.get(0),"<",pos);
+                // counter < size
+
+                SuffixExpressionNode suf = new SuffixExpressionNode(pos,lhs,"++");
+                // counter++;
+
+                SuiteNode suite = new SuiteNode(pos);
+
+                PrimaryExpressionNode offset = new PrimaryExpressionNode(pos,counter_name.toString());
+                offset.exprtype = PrimaryExpressionNode.ExpressionType.identifierExpr;
+                offset.type = "int";
+                offset.dim = 0;
+                ArrayIndexExpressionNode arridx = new ArrayIndexExpressionNode(pos,array,offset);
+                arridx.type = array.type;
+                arridx.dim = array.dim - 1;
+                //System.out.println(it.dim);
+                //System.out.println(arridx.dim);
+                NewExpressionNode nnew = new NewExpressionNode(pos,it.type,it.dim-1);
+                for(int j = 1;j < it.expression.size();++j){
+                    nnew.expression.add(it.expression.get(j));
+                }
+                AssignmentExpressionNode ass_new = new AssignmentExpressionNode(arridx,nnew,pos);
+                // alter[counter] = new int[][]递归的
+                ExpressionStatementNode ass_nnew = new ExpressionStatementNode(ass_new,pos);
+                //CallExpressionNode call_print = new CallExpressionNode(pos,null);
+                //call_print.func = llvm.symbols.functionTypes.get("printInt");
+                //call_print.auguments.add(lhs);
+                //ExpressionStatementNode print_stmt = new ExpressionStatementNode(call_print,pos);
+                //suite.stmts.add(print_stmt);
+                suite.stmts.add(ass_nnew);
+
+                ForStatementNode loop = new ForStatementNode(vardef,init,cond,suf,pos,suite);
+                alter.accept(this);
+                first_ass.accept(this);
+                loop.accept(this);
+                array.accept(this);
+                it.get_reg = array.get_reg;
+            }
+
         } else {
             StringBuilder info = new StringBuilder();
             it.expression.forEach(a-> {
@@ -725,11 +815,13 @@ public class IRBuilder extends ASTVisitor {
                     value.append(strs[i].toString());
                 }
                 info.append(value).append(" x ");
+                it.sizes.add(a.valueIR.values.get(0).number_value);
             });
             info.append(getter.getType(it.type, it.dim - it.expression.size(), null));
             for(int i=0;i<it.expression.size();++i)info.append("]");
             info.append(" zeroinitializer");
             it.info_for_global_var = info.toString();
+            //it.sizes.forEach(System.out::println);
         }
     }
     @Override
@@ -741,6 +833,7 @@ public class IRBuilder extends ASTVisitor {
     public void visit(ArrayIndexExpressionNode it){
         it.offset.accept(this);
         it.object.accept(this);
+        System.out.println(it.object.dim);
         String sext_res_reg;
         if(it.offset.get_value){
             SextInstruction sext = new SextInstruction(it.offset.valueIR.values.get(0).number_value,sext_instr_count++);
@@ -751,13 +844,15 @@ public class IRBuilder extends ASTVisitor {
             current_block.addInstruction(sext);
             sext_res_reg = sext.res_toString();
         }
-        GetElementPtrInstruction gep = new GetElementPtrInstruction(it.object.get_reg, getter.getType(it.object.type,it.object.dim-1, it.object.get_reg),sext_res_reg, 0,bracket_count++, llvm.globalVars.containsKey(it.object.get_reg));
+        //System.out.println(it.object.dim);
+        //System.out.println(getter.getType(it.object.type,it.object.dim, it.object.get_reg));
+        GetElementPtrInstruction gep = new GetElementPtrInstruction(it.object.get_reg,sext_res_reg, getter.getType(it.object.type,it.object.dim, it.object.get_reg),it.object.dim,bracket_count++, llvm.globalVars.containsKey(it.object.get_reg));
         current_block.addInstruction(gep);
         if(it.visited_as_lhs){
             it.get_reg = gep.res_toString();
         }
         else {
-            LoadInstruction load = new LoadInstruction(current_function.reg_count++,gep.res_toString(),getter.getType(it.type,it.dim-1,null),false);
+            LoadInstruction load = new LoadInstruction(current_function.reg_count++,gep.res_toString(),getter.getType(it.type,it.dim,null),false);
             current_block.addInstruction(load);
             StringBuilder res = new StringBuilder();
             res.append(current_function.reg_count-1);

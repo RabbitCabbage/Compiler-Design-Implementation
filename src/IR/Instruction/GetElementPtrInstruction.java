@@ -1,5 +1,7 @@
 package IR.Instruction;
 
+import java.util.ArrayList;
+
 public class GetElementPtrInstruction extends InstructionIR{
     public String type;
     public String result_reg;//目标在的reg
@@ -26,25 +28,37 @@ public class GetElementPtrInstruction extends InstructionIR{
     }
     public String array_reg;
     public String offset_reg;
-    public int array_size;
+    public int dim;
+    public boolean global;
     public int res_count;
-    public boolean array_global;
-    public GetElementPtrInstruction(String array_reg,String type,String offset_reg, int size,int res,boolean array_global){
-        this.array_reg = array_reg;
-        this.offset_reg = offset_reg;
+    public ArrayList<Integer> sizes;
+    //for globally newed array, a complex type name
+    //[2 x [3 x [4 x i32]]]
+    public GetElementPtrInstruction(String arr_reg, String ofs_reg, String type, int dim, int res_count,boolean global){
+        array_reg = arr_reg;
+        offset_reg = ofs_reg;
+        this.dim = dim;
         this.type = type;
-        for_array = true;
-        for_struct = false;
-        this.array_size = size;
-        this.res_count = res;
-        this.array_global = array_global;
+        this.global = global;
+        this.res_count = res_count;
+        this.for_array = true;
+        this.for_struct = false;
+    }
+    //for non-globally newed array, using typename like pointer
+    public GetElementPtrInstruction(){
+
     }
     public String toString(){
         StringBuilder gep = new StringBuilder();
         if(for_array){
-            gep.append("\t%arrayidx").append(res_count).append(" = getelementptr inbounds [");
-            gep.append(array_size).append(" x ").append(type).append("], [").append(array_size).append(" x ").append(type);
-            gep.append("]* ").append(array_global?"@":"%").append(array_reg).append(", i64 0, i64 ").append(offset_reg).append("\n");
+            gep.append("\t%arrayidx").append(res_count).append(" = getelementptr inbounds ");
+            gep.append(type);
+            gep.deleteCharAt(gep.length()-1);
+            gep.append(", ").append(type);
+            if(global)gep.append(" @");
+            else gep.append(" %");
+            gep.append(array_reg).append(", i64 ").append(offset_reg);
+            gep.append("\n");
         }
         else if(for_struct)
             gep.append("\t%").append(result_reg).append(" = getelementptr inbounds %struct.").append(type).append(", %struct.").append(type).append("* %").append(instance_reg).append(", i32 0, i32 ").append(index).append("\n");

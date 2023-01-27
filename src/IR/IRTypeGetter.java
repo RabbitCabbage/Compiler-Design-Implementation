@@ -34,10 +34,11 @@ public class IRTypeGetter {
         gep.append("getelementptr inbounds ([").append(str.length()).append(" x i8], [").append(str.length()).append(" x i8]* @"+reg+", i32 0, i32 0)");
         return gep.toString();
     }
-    public int getSize(String typename) {
-        if(typename.equals("int"))return 4;
+    public int getSize(String typename,int dim) {
+        if(dim >= 2) return 8;
+        if(typename.equals("int")||typename.equals("i32"))return 4;
         if(typename.equals("void"))return 0;
-        else return 0;//todo
+        else return 4;//todo
     }
 
     public int getAlign(String typename){
