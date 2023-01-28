@@ -71,7 +71,7 @@ public class LLVM {
             text.append("define ").append(getter.getType(fcdef.funcdef.returntype,fcdef.funcdef.returndim,null)).append(" @").append(fcdef.funcdef.name).append("(");
             int count = 0;
             for(ParameterNode para: fcdef.funcdef.parameterlist){
-                text.append(getter.getType(para.type,para.dim,null)).append(" %").append(para.declare.name);
+                text.append(getter.getType(para.type,para.dim,null)).append(" ").append(para.declare.name);
                 count = count + 1;
                 text.append(", ");
             }

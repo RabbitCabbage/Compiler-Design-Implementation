@@ -17,6 +17,7 @@ public class BinaryInstruction extends InstructionIR{
     }
     public String res_toString(){
         StringBuilder reg = new StringBuilder();
+        reg.append("%");
         if(opcode.equals("+"))reg.append("add").append(result_reg);
         else if(opcode.equals("-"))reg.append("sub").append(result_reg);
         else if(opcode.equals("*"))reg.append("mul").append(result_reg);

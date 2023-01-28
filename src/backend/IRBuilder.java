@@ -6,8 +6,7 @@ import IR.Instruction.*;
 import ast.*;
 import frontend.Symbols;
 import util.Position;
-
-import java.util.ArrayList;
+import util.Scope;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.Stack;
@@ -15,6 +14,7 @@ import java.util.Stack;
 public class IRBuilder extends ASTVisitor {
     public LLVM llvm;
     public Symbols symbols;
+    public Scope current_scope;
     public IRTypeGetter getter;
     public int if_statement_count;
     public int loop_statement_count;
@@ -23,14 +23,15 @@ public class IRBuilder extends ASTVisitor {
     public int binary_expression_count;
     public int string_constant_count;
     public int short_cut_count;
-    public String last_expression_name;//记下的是上一个访问到的identifier的名字
+    public String   last_identifier_expression_reg;//记下的是上一个访问到的identifier的名字
     public int sext_instr_count;
     public int bracket_count;
     public int new_alternative_count;
     public int new_loop_count;
+    public HashMap<String, Integer> variable_name_to_count;
 
     public IRBuilder(Symbols symbols) {
-        this.symbols = symbols;
+        this.symbols = symbols;     
         llvm = new LLVM(symbols);
         getter = new IRTypeGetter(symbols,llvm);
         short_cut_count = 0;
@@ -44,6 +45,8 @@ public class IRBuilder extends ASTVisitor {
         bracket_count = 0;
         new_alternative_count = 0;
         new_loop_count = 0;
+        this.current_scope = new Scope(null);
+        variable_name_to_count = new HashMap<>();
     }
 
     public FunctionIR current_function;//用来记下现在正在处理的函数，以便于给这个函数加block
@@ -74,10 +77,24 @@ public class IRBuilder extends ASTVisitor {
 
     @Override
     public void visit(DeclarationNode it) {
-        String name = it.name;
+        StringBuilder reg_name = new StringBuilder();
+        if(current_scope.parent==null)reg_name.append("@");
+        else reg_name.append("%");
+        reg_name.append(it.name);
+        if(current_scope.containVariable(it.name,true)){
+            int last_max = variable_name_to_count.get(it.name);
+            variable_name_to_count.replace(it.name,last_max+1);
+            reg_name.append(last_max+1);
+            current_scope.variable_name_to_reg_name.put(it.name,reg_name.toString());
+        }
+        else {
+            current_scope.variable_name_to_reg_name.put(it.name,reg_name.toString());
+            variable_name_to_count.put(it.name,0);
+        }
+        current_scope.defineVariable(it.name,it,it.pos);
         if (current_block == null) {
             StringBuilder global_info = new StringBuilder();
-            global_info.append("@"+it.name);
+            global_info.append(reg_name.toString());
             if (it.init != null) {
                 it.init.accept(this);
                 global_info.append(" = dso_local global ").append(it.init.info_for_global_var).append("\n");
@@ -91,53 +108,69 @@ public class IRBuilder extends ASTVisitor {
             it.init.accept(this);
             String type = getter.getType(it.init.type,it.init.dim,it.init.get_reg);
             //System.out.println(type);
-            AllocaInstruction alloc = new AllocaInstruction(name, getter.getType(it.type,it.dim,null));
+            AllocaInstruction alloc = new AllocaInstruction(reg_name.toString(), getter.getType(it.type,it.dim,null));
             current_block.addInstruction(alloc);
             if (it.init.get_value) {
                 ValueUnit unit = it.init.valueIR.values.get(0);
                 StoreInstruction store;
                 if(it.type.equals("string")) {
                     StringBuilder resreg  = new StringBuilder();
-                    resreg.append(current_function.reg_count++);
+                    resreg.append("%").append(current_function.reg_count++);
                     GetElementPtrInstruction gep = new GetElementPtrInstruction("i8",resreg.toString(),it.init.get_reg,it.init.valueIR.values.get(0).string_value);
                     current_block.addInstruction(gep);
-                    store = new StoreInstruction(resreg.toString(), "i8*", name, getter.getType(it.type,it.dim,null),llvm.globalVars.containsKey(name)||llvm.stringConstants.containsKey(name));
+                    store = new StoreInstruction(resreg.toString(), "i8*", reg_name.toString(), getter.getType(it.type,it.dim,null));
                 }
-                else  store = new StoreInstruction(unit, type, name,llvm.globalVars.containsKey(name)||llvm.stringConstants.containsKey(name));
+                else  store = new StoreInstruction(unit, type, reg_name.toString());
                 current_block.addInstruction(store);
             } else {
                 //System.out.println(it.init.get_reg);
-                StoreInstruction store = new StoreInstruction(it.init.get_reg, type, name,getter.getType(it.type,it.dim,null),llvm.globalVars.containsKey(name)||llvm.stringConstants.containsKey(name));
+                StoreInstruction store = new StoreInstruction(it.init.get_reg, type, reg_name.toString(),getter.getType(it.type,it.dim,null));
                 current_block.addInstruction(store);
             }
         } else {
-            AllocaInstruction alloc = new AllocaInstruction(name, getter.getType(it.type,it.dim,null));
+            AllocaInstruction alloc = new AllocaInstruction(reg_name.toString(), getter.getType(it.type,it.dim,null));
             current_block.addInstruction(alloc);
         }
     }
 
     @Override
     public void visit(FunctionDefNode it) {
+        current_scope = new Scope(current_scope);
+        current_scope.function_paras_defined = true;
         current_function = new FunctionIR(it);
         llvm.functions.put(it.name, current_function);//收集函数定义
         current_block = new BlockIR("entry");
+        StringBuilder reg_name = new StringBuilder();
+        reg_name.append("%");
         it.parameterlist.forEach(a -> {
-            current_function.para_names.add(a.declare.name);
+            reg_name.append(a.declare.name);
+            if(current_scope.containVariable(a.declare.name,true)){
+                int last_max = variable_name_to_count.get(a.declare.name);
+                variable_name_to_count.replace(a.declare.name,last_max+1);
+                reg_name.append(last_max+1);
+                current_scope.variable_name_to_reg_name.put(a.declare.name,reg_name.toString());
+            }
+            else {
+                current_scope.variable_name_to_reg_name.put(a.declare.name,reg_name.toString());
+                variable_name_to_count.put(a.declare.name,0);
+            }
+            current_scope.defineVariable(a.declare.name,a.declare,a.declare.pos);
+            current_function.para_names.add(reg_name.toString());
             AllocaInstruction alloca = new AllocaInstruction(a.declare.name + ".addr", getter.getType(a.type, a.dim,null));
             current_block.addInstruction(alloca);
-        });
-        it.parameterlist.forEach(a -> {
-            StoreInstruction store = new StoreInstruction(a.declare.name, getter.getType(a.type, a.dim,null), a.declare.name + ".addr",getter.getType(a.type, a.dim,null),llvm.globalVars.containsKey(a.declare.name+".addr")||llvm.stringConstants.containsKey(a.declare.name+".addr"));
+            StoreInstruction store = new StoreInstruction(reg_name.toString(), getter.getType(a.type, a.dim,null), "%"+a.declare.name + ".addr",getter.getType(a.type, a.dim,null));
             current_block.addInstruction(store);
         });
         it.stmts.accept(this);//访问每一个具体的语句，把它翻译成llvm
         //System.out.print("function statement end ");
         //System.out.println(current_block.block_id);
         current_function.blocks.add(current_block);
+        current_scope = current_scope.parent;
     }
 
     @Override
     public void visit(ClassDefNode it) {
+        current_scope = new Scope(current_scope);
         ClassIR cls = new ClassIR(it);
         it.methoddefs.forEach(a -> {
             a.accept(this);
@@ -149,10 +182,17 @@ public class IRBuilder extends ASTVisitor {
             cls.elements.addAll(a.declarations);
         });
         llvm.classes.put(it.name, cls);//收集类定义
+        current_scope = current_scope.parent;
     }
     @Override
     public void visit(SuiteNode it){
+        boolean newed = false;
+        if(!current_scope.function_paras_defined){
+            current_scope = new Scope(current_scope);
+            newed = true;
+        } else current_scope.function_paras_defined = false;
         it.stmts.forEach(a->a.accept(this));
+        if(newed)current_scope = current_scope.parent;
     }
     //在visit的时候把function内部的块串好，串起来，并且把其中的具体的statement放进去
     @Override
@@ -180,7 +220,9 @@ public class IRBuilder extends ASTVisitor {
 
         branch_is_returned = false;
         current_block = then_block;
+        current_scope = new Scope(current_scope);
         it.thenstmt.accept(this);
+        current_scope = current_scope.parent;
         if (!branch_is_returned) {
             BrInstruction then_br = new BrInstruction(null, "if.end" + count.toString(), null);
             current_block.addInstruction(then_br);
@@ -191,7 +233,9 @@ public class IRBuilder extends ASTVisitor {
         if (it.elsestmt != null) {
             branch_is_returned = false;
             current_block = else_block;
+            current_scope = new Scope(current_scope);
             it.elsestmt.accept(this);
+            current_scope = current_scope.parent;
             if (!branch_is_returned) {
                 BrInstruction else_br = new BrInstruction(null, "if.end" + count.toString(), null);
                 current_block.addInstruction(else_br);
@@ -226,6 +270,8 @@ public class IRBuilder extends ASTVisitor {
 
     @Override
     public void visit(WhileStatementNode it) {
+        current_scope = new Scope(current_scope);
+        current_scope.is_loop = true;
         loop_statement_count++;
         loop_stack.push(loop_statement_count);
         StringBuilder count = new StringBuilder();
@@ -250,10 +296,13 @@ public class IRBuilder extends ASTVisitor {
         BlockIR next_block = new BlockIR("while.end" + count.toString());
         current_block = next_block;
         loop_stack.pop();
+        current_scope = current_scope.parent;
     }
 
     @Override
     public void visit(ForStatementNode it) {
+        current_scope = new Scope(current_scope);
+        current_scope.is_loop = true;
         loop_statement_count++;
         loop_stack.push(loop_statement_count);
         StringBuilder count = new StringBuilder();
@@ -292,6 +341,7 @@ public class IRBuilder extends ASTVisitor {
         //System.out.print(current_block.block_id);
         current_block = next;
         loop_stack.pop();
+        current_scope = current_scope.parent;
     }
 
     @Override
@@ -342,19 +392,19 @@ public class IRBuilder extends ASTVisitor {
     @Override
     public void visit(PrimaryExpressionNode it) {
         if (it.exprtype == PrimaryExpressionNode.ExpressionType.identifierExpr) {
-            // todo if there is a var of the same name shadowing the parameters
-            // todo global variables should be referenced to by @
+            Scope destination = current_scope.findScopeContaining(it.primaryExpression);
+            String reg_name = destination.variable_name_to_reg_name.get(it.primaryExpression);//本身含有% @
             if (!it.visited_as_lhs) {
-                LoadInstruction load = new LoadInstruction(current_function.reg_count++, (current_function.para_names.contains(it.primaryExpression) ? (it.primaryExpression + ".addr") : it.primaryExpression), getter.getType(it.type, it.dim,null),llvm.globalVars.containsKey((current_function.para_names.contains(it.primaryExpression) ? (it.primaryExpression + ".addr") : it.primaryExpression))||llvm.stringConstants.containsKey((current_function.para_names.contains(it.primaryExpression) ? (it.primaryExpression + ".addr") : it.primaryExpression)));
+                LoadInstruction load = new LoadInstruction(current_function.reg_count++, (current_function.para_names.contains(it.primaryExpression) ? ("%"+it.primaryExpression + ".addr") : reg_name.toString()), getter.getType(it.type, it.dim,null));
                 current_block.addInstruction(load);
                 StringBuilder tmp = new StringBuilder();
                 tmp.append(current_function.reg_count - 1);
                 //tmp.append("IDENTIFIER");
                 it.get_reg = tmp.toString();
-                last_expression_name = (current_function.para_names.contains(it.primaryExpression) ? (it.primaryExpression + ".addr") : it.primaryExpression);
+                  last_identifier_expression_reg = (current_function.para_names.contains(it.primaryExpression) ? ("%"+it.primaryExpression + ".addr") : reg_name.toString());
             } else {
                 it.get_reg = it.primaryExpression;
-                last_expression_name = (current_function.para_names.contains(it.primaryExpression) ? (it.primaryExpression + ".addr") : it.primaryExpression);
+                  last_identifier_expression_reg = (current_function.para_names.contains(it.primaryExpression) ? ("%"+it.primaryExpression + ".addr") : reg_name.toString());
             }
         }
         if (it.exprtype == PrimaryExpressionNode.ExpressionType.stringLiteralExpr) {
@@ -401,7 +451,6 @@ public class IRBuilder extends ASTVisitor {
             }
         }
     }
-
     @Override
     public void visit(BinaryExpressionNode it) {
         if(current_function == null){
@@ -618,12 +667,12 @@ public class IRBuilder extends ASTVisitor {
         it.rhs.accept(this);
         if (it.rhs.get_value) {
             //System.out.println("Store the value");
-            StoreInstruction store = new StoreInstruction(it.rhs.valueIR.values.get(0), getter.getType(it.rhs.type,it.rhs.dim,it.rhs.get_reg), it.lhs.get_reg,llvm.globalVars.containsKey(it.lhs.get_reg)||llvm.stringConstants.containsKey(it.lhs.get_reg));
+            StoreInstruction store = new StoreInstruction(it.rhs.valueIR.values.get(0), getter.getType(it.rhs.type,it.rhs.dim,it.rhs.get_reg),it.lhs.get_reg);
             current_block.addInstruction(store);
         } else {
             //System.out.println("Store the reg");
             //System.out.println(it.rhs.get_reg);
-            StoreInstruction store = new StoreInstruction(it.rhs.get_reg, getter.getType(it.rhs.type, it.rhs.dim,it.rhs.get_reg), it.lhs.get_reg,getter.getType(it.lhs.type, it.lhs.dim,it.lhs.get_reg),llvm.globalVars.containsKey(it.lhs.get_reg)||llvm.stringConstants.containsKey(it.lhs.get_reg));
+            StoreInstruction store = new StoreInstruction(it.rhs.get_reg, getter.getType(it.rhs.type, it.rhs.dim,it.rhs.get_reg), it.lhs.get_reg,getter.getType(it.lhs.type, it.lhs.dim,it.lhs.get_reg));
             //System.out.println(current_block.instrs.size());
             current_block.addInstruction(store);
             //System.out.println(current_block.instrs.size());
@@ -638,14 +687,16 @@ public class IRBuilder extends ASTVisitor {
         it.object.accept(this);
         it.object.visited_as_lhs = false;
         StringBuilder resreg = new StringBuilder();
+        resreg.append("%");
         resreg.append(current_function.reg_count++);
         GetElementPtrInstruction gep = new GetElementPtrInstruction(it.object.type, resreg.toString(), it.object.get_reg, index);
         current_block.addInstruction(gep);//get a pointer to pointer, that is pointer2
-        LoadInstruction load_ptr1 = new LoadInstruction(current_function.reg_count++, resreg.toString(), object_class.elements.get(index).type,llvm.globalVars.containsKey(resreg.toString())||llvm.stringConstants.containsKey(resreg.toString()));
+        LoadInstruction load_ptr1 = new LoadInstruction(current_function.reg_count++, resreg.toString(), object_class.elements.get(index).type);
         current_block.addInstruction(load_ptr1);
         StringBuilder ptr1reg = new StringBuilder();
+        ptr1reg.append("%");
         ptr1reg.append(current_function.reg_count);
-        LoadInstruction load_element = new LoadInstruction(current_function.reg_count++, ptr1reg.toString(), object_class.elements.get(index).type,llvm.globalVars.containsKey(ptr1reg.toString())||llvm.stringConstants.containsKey(ptr1reg.toString()));
+        LoadInstruction load_element = new LoadInstruction(current_function.reg_count++, ptr1reg.toString(), object_class.elements.get(index).type);
         current_block.addInstruction(load_element);
         StringBuilder elementreg = new StringBuilder();
         elementreg.append(current_function.reg_count);
@@ -658,16 +709,16 @@ public class IRBuilder extends ASTVisitor {
             it.object.accept(this);
             BinaryInstruction add = new BinaryInstruction("+", "%"+it.object.get_reg, "1", getter.getType(it.object.type,it.object.dim,it.object.get_reg),binary_expression_count++);
             current_block.addInstruction(add);
-            StoreInstruction store = new StoreInstruction(add.res_toString(),getter.getType(it.object.type,it.object.dim,null),last_expression_name,getter.getType(it.object.type,it.object.dim,null),llvm.globalVars.containsKey(last_expression_name)||llvm.stringConstants.containsKey(last_expression_name));
+            StoreInstruction store = new StoreInstruction(add.res_toString(),getter.getType(it.object.type,it.object.dim,null),  last_identifier_expression_reg,getter.getType(it.object.type,it.object.dim,null));
             current_block.addInstruction(store);
             it.get_reg = add.res_toString();
         } else if(it.op.equals("--")) {
             it.object.accept(this);
-            BinaryInstruction add = new BinaryInstruction("-", "%" + it.object.get_reg, "1", getter.getType(it.object.type,it.object.dim,it.object.get_reg), binary_expression_count++);
-            current_block.addInstruction(add);
-            StoreInstruction store = new StoreInstruction(add.res_toString(), getter.getType(it.object.type,it.object.dim,null), last_expression_name,getter.getType(it.object.type,it.object.dim,null),llvm.globalVars.containsKey(last_expression_name)||llvm.stringConstants.containsKey(last_expression_name));
+            BinaryInstruction sub = new BinaryInstruction("-", "%" + it.object.get_reg, "1", getter.getType(it.object.type,it.object.dim,it.object.get_reg), binary_expression_count++);
+            current_block.addInstruction(sub);
+            StoreInstruction store = new StoreInstruction(sub.res_toString(), getter.getType(it.object.type,it.object.dim,null),   last_identifier_expression_reg,getter.getType(it.object.type,it.object.dim,null));
             current_block.addInstruction(store);
-            it.get_reg = add.res_toString();
+            it.get_reg = sub.res_toString();
         }else if (it.op.equals("~")){
             it.object.accept(this);
             BinaryInstruction xor = new BinaryInstruction("^",it.object.get_reg,"-1",getter.getType(it.object.type,it.object.dim,it.object.get_reg),binary_expression_count++);
@@ -698,14 +749,14 @@ public class IRBuilder extends ASTVisitor {
             it.get_reg = it.object.get_reg;
             BinaryInstruction add = new BinaryInstruction("+", "%"+it.object.get_reg, "1", getter.getType(it.object.type,it.object.dim,it.object.get_reg),binary_expression_count++);
             current_block.addInstruction(add);
-            StoreInstruction store = new StoreInstruction(add.res_toString(),getter.getType(it.object.type,it.object.dim,null),last_expression_name,getter.getType(it.object.type,it.object.dim,null),llvm.globalVars.containsKey(last_expression_name)||llvm.stringConstants.containsKey(last_expression_name));
+            StoreInstruction store = new StoreInstruction(add.res_toString(), getter.getType(it.object.type,it.object.dim,null),   last_identifier_expression_reg,getter.getType(it.object.type,it.object.dim,null));
             current_block.addInstruction(store);
         } else if(it.op.equals("--")) {
             it.object.accept(this);
             it.get_reg = it.object.get_reg;
-            BinaryInstruction add = new BinaryInstruction("-", "%" + it.object.get_reg, "1", getter.getType(it.object.type,it.object.dim,it.object.get_reg), binary_expression_count++);
-            current_block.addInstruction(add);
-            StoreInstruction store = new StoreInstruction(add.res_toString(), getter.getType(it.object.type,it.object.dim,null), last_expression_name,getter.getType(it.object.type,it.object.dim,null),llvm.globalVars.containsKey(last_expression_name)||llvm.stringConstants.containsKey(last_expression_name));
+            BinaryInstruction sub = new BinaryInstruction("-", "%" + it.object.get_reg, "1", getter.getType(it.object.type,it.object.dim,it.object.get_reg), binary_expression_count++);
+            current_block.addInstruction(sub);
+            StoreInstruction store = new StoreInstruction(sub.res_toString(), getter.getType(it.object.type,it.object.dim,null),   last_identifier_expression_reg,getter.getType(it.object.type,it.object.dim,null));
             current_block.addInstruction(store);
         }
     }
@@ -840,19 +891,19 @@ public class IRBuilder extends ASTVisitor {
             current_block.addInstruction(sext);
             sext_res_reg = sext.res_toString();
         }else {
-            SextInstruction sext = new SextInstruction(it.offset.get_reg,sext_instr_count++,llvm.globalVars.containsKey(it.offset.get_reg));
+            SextInstruction sext = new SextInstruction(it.offset.get_reg,sext_instr_count++);
             current_block.addInstruction(sext);
             sext_res_reg = sext.res_toString();
         }
         //System.out.println(it.object.dim);
         //System.out.println(getter.getType(it.object.type,it.object.dim, it.object.get_reg));
-        GetElementPtrInstruction gep = new GetElementPtrInstruction(it.object.get_reg,sext_res_reg, getter.getType(it.object.type,it.object.dim, it.object.get_reg),it.object.dim,bracket_count++, llvm.globalVars.containsKey(it.object.get_reg));
+        GetElementPtrInstruction gep = new GetElementPtrInstruction(it.object.get_reg, sext_res_reg, getter.getType(it.object.type,it.object.dim, it.object.get_reg),it.object.dim,bracket_count++);
         current_block.addInstruction(gep);
         if(it.visited_as_lhs){
             it.get_reg = gep.res_toString();
         }
         else {
-            LoadInstruction load = new LoadInstruction(current_function.reg_count++,gep.res_toString(),getter.getType(it.type,it.dim,null),false);
+            LoadInstruction load = new LoadInstruction(current_function.reg_count++,gep.res_toString(),getter.getType(it.type,it.dim,null));
             current_block.addInstruction(load);
             StringBuilder res = new StringBuilder();
             res.append(current_function.reg_count-1);

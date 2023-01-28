@@ -3,13 +3,11 @@ package IR.Instruction;
 public class SextInstruction extends InstructionIR{
     public int result_reg;
     public String reg_to_change;
-    public boolean is_global;
     public int value;
     public boolean get_value = false;
-    public SextInstruction(String change,int res,boolean global){
+    public SextInstruction(String change,int res){
         reg_to_change = change;
         result_reg = res;
-        is_global = global;
     }
     public SextInstruction(int value, int res){
         this.value = value;
@@ -28,8 +26,6 @@ public class SextInstruction extends InstructionIR{
         if(get_value){
             sext.append(value);
         }else{
-            if(is_global)sext.append("@");
-            else sext.append("%");
             sext.append(reg_to_change);
         }
         sext.append(" to i64\n");

@@ -29,17 +29,15 @@ public class GetElementPtrInstruction extends InstructionIR{
     public String array_reg;
     public String offset_reg;
     public int dim;
-    public boolean global;
     public int res_count;
     public ArrayList<Integer> sizes;
     //for globally newed array, a complex type name
     //[2 x [3 x [4 x i32]]]
-    public GetElementPtrInstruction(String arr_reg, String ofs_reg, String type, int dim, int res_count,boolean global){
+    public GetElementPtrInstruction(String arr_reg, String ofs_reg, String type, int dim, int res_count){
         array_reg = arr_reg;
         offset_reg = ofs_reg;
         this.dim = dim;
         this.type = type;
-        this.global = global;
         this.res_count = res_count;
         this.for_array = true;
         this.for_struct = false;
@@ -55,8 +53,6 @@ public class GetElementPtrInstruction extends InstructionIR{
             gep.append(type);
             gep.deleteCharAt(gep.length()-1);
             gep.append(", ").append(type);
-            if(global)gep.append(" @");
-            else gep.append(" %");
             gep.append(array_reg).append(", i64 ").append(offset_reg);
             gep.append("\n");
         }
@@ -68,6 +64,7 @@ public class GetElementPtrInstruction extends InstructionIR{
     }
     public String res_toString(){
         StringBuilder gep_res = new StringBuilder();
+        gep_res.append("%");
         if(for_array){
             gep_res.append("arrayidx").append(res_count);
         } else {

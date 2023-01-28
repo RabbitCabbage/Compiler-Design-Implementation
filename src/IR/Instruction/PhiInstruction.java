@@ -15,6 +15,7 @@ public class PhiInstruction extends InstructionIR{
     }
     public String res_toString(){
         StringBuilder res = new StringBuilder();
+        res.append("%");
         res.append(result_reg);
         return  res.toString();
     }

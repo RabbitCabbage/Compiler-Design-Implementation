@@ -19,6 +19,7 @@ public class BitcastInstruction extends InstructionIR{
     }
     public String res_toString(){
         StringBuilder res_reg = new StringBuilder();
+        res_reg.append("%");
         res_reg.append(result_reg);
         return res_reg.toString();
     }

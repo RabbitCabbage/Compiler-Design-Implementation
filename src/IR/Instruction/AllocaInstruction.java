@@ -9,7 +9,7 @@ public class AllocaInstruction extends InstructionIR {
     }
     public String toString(){
         StringBuilder alloc = new StringBuilder();
-        alloc.append("\t%").append(name).append(" = alloca ").append(type).append("\n");
+        alloc.append("\t").append(name).append(" = alloca ").append(type).append("\n");
         return alloc.toString();
     }
     public String res_toString(){
