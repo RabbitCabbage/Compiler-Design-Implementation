@@ -52,7 +52,7 @@ public class GetElementPtrInstruction extends InstructionIR{
             gep.append("\t%arrayidx").append(res_count).append(" = getelementptr inbounds ");
             gep.append(type);
             gep.deleteCharAt(gep.length()-1);
-            gep.append(", ").append(type);
+            gep.append(", ").append(type).append(" ");
             gep.append(array_reg).append(", i64 ").append(offset_reg);
             gep.append("\n");
         }

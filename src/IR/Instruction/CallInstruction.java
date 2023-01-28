@@ -23,7 +23,6 @@ public class CallInstruction extends InstructionIR{
             call.append("\tcall void @");
         }else call.append("\t%call").append(call_reg).append(" = call ").append(return_type).append(" @");
         call.append(func_name).append("(");
-        AtomicInteger count = new AtomicInteger();
         para.forEach(a->call.append(a).append(", "));
         if(!para.isEmpty()){
             call.deleteCharAt(call.length()-1);

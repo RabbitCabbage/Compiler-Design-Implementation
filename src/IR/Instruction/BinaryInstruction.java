@@ -29,8 +29,11 @@ public class BinaryInstruction extends InstructionIR{
         else if(opcode.equals("|"))reg.append("or").append(result_reg);
         else if(opcode.equals("^"))reg.append("xor").append(result_reg);
         else if(opcode.equals("==")||opcode.equals("!=")||opcode.equals("<")||opcode.equals("<=")||opcode.equals(">")||opcode.equals(">="))reg.append("cmp").append(result_reg);
+        System.out.println(reg.toString());
         return reg.toString();    }
     public String toString(){
+        //System.out.println(lhs_reg);
+        //System.out.println(rhs_reg);
         StringBuilder binary = new StringBuilder();
         if(opcode.equals("+"))binary.append("\t%").append("add").append(result_reg).append(" = add ").append(type).append(" ").append(lhs_reg).append(", ").append(rhs_reg).append("\n");
         else if(opcode.equals("-"))binary.append("\t%").append("sub").append(result_reg).append(" = sub ").append(type).append(" ").append(lhs_reg).append(", ").append(rhs_reg).append("\n");

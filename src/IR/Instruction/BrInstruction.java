@@ -14,7 +14,7 @@ public class BrInstruction extends InstructionIR {
         StringBuilder br = new StringBuilder();
         br.append("\tbr ");
         if(condition != null){
-            br.append("i1 %").append(condition).append(", label %").append(label1).append(", label %").append(label2).append("\n");
+            br.append("i1 ").append(condition).append(", label %").append(label1).append(", label %").append(label2).append("\n");
             return br.toString();
         }else {
             br.append("label %").append(label1).append("\n");
