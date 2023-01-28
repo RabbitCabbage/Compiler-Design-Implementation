@@ -1,15 +1,7 @@
-int a = 22;
-void func(int a) {
-    a = 888;
-        {
-            int a = 12;
-        }
-    	return ;
-}
+//int [][][] a  = new int [2][3][4];
+int b = 32323;
+int c = b;
 int main(){
-    a = 888;
-        {
-            int a = 12;
-        }
+    printInt(c);
     return 0;
 }

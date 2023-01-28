@@ -15,6 +15,7 @@ public class IRBuilder extends ASTVisitor {
     public LLVM llvm;
     public Symbols symbols;
     public Scope current_scope;
+    Scope global_scope;
     public IRTypeGetter getter;
     public int if_statement_count;
     public int loop_statement_count;
@@ -23,7 +24,7 @@ public class IRBuilder extends ASTVisitor {
     public int binary_expression_count;
     public int string_constant_count;
     public int short_cut_count;
-    public String   last_identifier_expression_reg;//记下的是上一个访问到的identifier的名字
+    public String last_identifier_expression_reg;//记下的是上一个访问到的identifier的名字
     public int sext_instr_count;
     public int bracket_count;
     public int new_alternative_count;
@@ -33,6 +34,14 @@ public class IRBuilder extends ASTVisitor {
     public IRBuilder(Symbols symbols) {
         this.symbols = symbols;     
         llvm = new LLVM(symbols);
+        //增加一个处理global
+        SuiteNode func_body = new SuiteNode(new Position(0,0));
+        FunctionDefNode init_global_func = new FunctionDefNode("void",0,"kunkun_initialize_global_declarations",func_body,null,new Position(0,0));
+        FunctionIR init_global = new FunctionIR(init_global_func);
+        BlockIR entry_block = new BlockIR("entry");
+        init_global.blocks.add(entry_block);
+        llvm.functions.put("kunkun_initialize_global_declarations",init_global);
+
         getter = new IRTypeGetter(symbols,llvm);
         short_cut_count = 0;
         if_statement_count = 0;
@@ -46,6 +55,7 @@ public class IRBuilder extends ASTVisitor {
         new_alternative_count = 0;
         new_loop_count = 0;
         this.current_scope = new Scope(null);
+        global_scope = this.current_scope;
         variable_name_to_count = new HashMap<>();
     }
 
@@ -96,8 +106,16 @@ public class IRBuilder extends ASTVisitor {
             StringBuilder global_info = new StringBuilder();
             global_info.append(reg_name.toString());
             if (it.init != null) {
-                it.init.accept(this);
-                global_info.append(" = dso_local global ").append(it.init.info_for_global_var).append("\n");
+                PrimaryExpressionNode lhs = new PrimaryExpressionNode(it.pos,it.name);
+                lhs.type = it.type;
+                lhs.dim = it.dim;
+                lhs.exprtype = PrimaryExpressionNode.ExpressionType.identifierExpr;
+                AssignmentExpressionNode assign = new AssignmentExpressionNode(lhs,it.init,it.pos);
+                assign.accept(this);
+//                if(it.init.info_for_global_var!=null)global_info.append(" = dso_local global ").append(it.init.info_for_global_var).append("\n");
+//                else {
+                    global_info.append(" = dso_local global ").append(getter.getType(it.type,it.dim,null)).append(" 0\n");
+//                }
             }else{
                 global_info.append(" = dso_local global ").append(getter.getType(it.type,it.dim,null)).append(" 0\n");
             }
@@ -161,6 +179,10 @@ public class IRBuilder extends ASTVisitor {
             StoreInstruction store = new StoreInstruction(reg_name.toString(), getter.getType(a.type, a.dim,null), "%"+a.declare.name + ".addr",getter.getType(a.type, a.dim,null));
             current_block.addInstruction(store);
         });
+        if(it.name.equals("main")){
+            CallInstruction call_init_global = new CallInstruction("void","kunkun_initialize_global_declarations",0);
+            current_block.addInstruction(call_init_global);
+        }
         it.stmts.accept(this);//访问每一个具体的语句，把它翻译成llvm
         //System.out.print("function statement end ");
         //System.out.println(current_block.block_id);
@@ -400,10 +422,10 @@ public class IRBuilder extends ASTVisitor {
                 StringBuilder tmp = new StringBuilder();
                 tmp.append(current_function.reg_count - 1);
                 //tmp.append("IDENTIFIER");
-                it.get_reg = tmp.toString();
+                it.get_reg = "%"+tmp.toString();
                   last_identifier_expression_reg = (current_function.para_names.contains(it.primaryExpression) ? ("%"+it.primaryExpression + ".addr") : reg_name.toString());
             } else {
-                it.get_reg = it.primaryExpression;
+                it.get_reg = reg_name;
                   last_identifier_expression_reg = (current_function.para_names.contains(it.primaryExpression) ? ("%"+it.primaryExpression + ".addr") : reg_name.toString());
             }
         }
@@ -661,6 +683,12 @@ public class IRBuilder extends ASTVisitor {
 
     @Override
     public void visit(AssignmentExpressionNode it) {
+        boolean use_init_global = false;
+        if(current_function == null){
+            current_function = llvm.functions.get("kunkun_initialize_global_declarations");
+            current_block = current_function.blocks.get(0);
+            use_init_global = true;
+        }
         it.lhs.visited_as_lhs = true;//说明是被用作左值，不用load等等
         it.lhs.accept(this);
         it.lhs.visited_as_lhs = false;
@@ -676,6 +704,10 @@ public class IRBuilder extends ASTVisitor {
             //System.out.println(current_block.instrs.size());
             current_block.addInstruction(store);
             //System.out.println(current_block.instrs.size());
+        }
+        if(use_init_global){
+            current_block = null;
+            current_function = null;
         }
     }
 

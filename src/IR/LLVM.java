@@ -1,5 +1,6 @@
 package IR;
 
+import IR.Instruction.RetInstruction;
 import ast.ParameterNode;
 import frontend.Symbols;
 
@@ -66,7 +67,7 @@ public class LLVM {
         }
         text.append("\n");
         //System.out.println(text.toString());
-        //System.out.println("****************************************");
+        functions.get("kunkun_initialize_global_declarations").blocks.get(0).addInstruction(new RetInstruction(null,null,true));
         for(var fcdef: functions.values()){
             text.append("define ").append(getter.getType(fcdef.funcdef.returntype,fcdef.funcdef.returndim,null)).append(" @").append(fcdef.funcdef.name).append("(");
             int count = 0;
