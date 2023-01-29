@@ -35,9 +35,10 @@ public class LLVM {
         }
         for(var clsdef: classes.values()){
             text.append("%struct.").append(clsdef.classdef.name).append(" = type {");
-            for(var vardef: clsdef.classdef.variablemap.values()){
-                text.append(getter.getType(vardef.type,vardef.dim,null)+"*").append(", ");
-            }
+            clsdef.elements.forEach(a->{
+                //System.out.println(a.name);
+                text.append(getter.getType(a.type,a.dim,null)).append(", ");
+            });
             text.deleteCharAt(text.length()-1);
             text.deleteCharAt(text.length()-1);
             text.append("}\n");
@@ -67,12 +68,17 @@ public class LLVM {
         }
         text.append("\n");
         //System.out.println(text.toString());
-        functions.get("kunkun_initialize_global_declarations").blocks.get(functions.get("kunkun_initialize_global_declarations").blocks.size()-1).addInstruction(new RetInstruction(null,null,true));
+        if(functions.get("kunkun_initialize_global_declarations").blocks.isEmpty()){
+            BlockIR entry = new BlockIR("entry");
+            entry.addInstruction(new RetInstruction(null,null,true));
+            functions.get("kunkun_initialize_global_declarations").blocks.add(entry);
+        }
+        else  functions.get("kunkun_initialize_global_declarations").blocks.get(functions.get("kunkun_initialize_global_declarations").blocks.size()-1).addInstruction(new RetInstruction(null,null,true));
         for(var fcdef: functions.values()){
             text.append("define ").append(getter.getType(fcdef.funcdef.returntype,fcdef.funcdef.returndim,null)).append(" @").append(fcdef.funcdef.name).append("(");
             int count = 0;
             for(ParameterNode para: fcdef.funcdef.parameterlist){
-                text.append(getter.getType(para.type,para.dim,null)).append(" ").append(para.declare.name);
+                text.append(getter.getType(para.type,para.dim,null)).append(" ").append(fcdef.para_names.get(count));
                 count = count + 1;
                 text.append(", ");
             }

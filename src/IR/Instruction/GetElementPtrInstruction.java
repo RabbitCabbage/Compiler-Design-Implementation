@@ -43,9 +43,7 @@ public class GetElementPtrInstruction extends InstructionIR{
         this.for_struct = false;
     }
     //for non-globally newed array, using typename like pointer
-    public GetElementPtrInstruction(){
 
-    }
     public String toString(){
         StringBuilder gep = new StringBuilder();
         if(for_array){
@@ -57,15 +55,15 @@ public class GetElementPtrInstruction extends InstructionIR{
             gep.append("\n");
         }
         else if(for_struct)
-            gep.append("\t%").append(result_reg).append(" = getelementptr inbounds %struct.").append(type).append(", %struct.").append(type).append("* %").append(instance_reg).append(", i32 0, i32 ").append(index).append("\n");
+            gep.append("\t").append(result_reg).append(" = getelementptr inbounds %struct.").append(type).append(", %struct.").append(type).append("* ").append(instance_reg).append(", i32 0, i32 ").append(index).append("\n");
         else gep.append("\t%").append(result_reg).append(" = getelementptr inbounds [").append(length).append(" x i8], [").append(length).append(" x i8]* @").append(instance_reg).append(", i32 0, i32 0\n");
         //System.out.println("HELLO"+gep.toString());
         return gep.toString();
     }
     public String res_toString(){
         StringBuilder gep_res = new StringBuilder();
-        gep_res.append("%");
         if(for_array){
+            gep_res.append("%");
             gep_res.append("arrayidx").append(res_count);
         } else {
             gep_res.append(result_reg);
