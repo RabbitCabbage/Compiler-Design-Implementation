@@ -111,7 +111,7 @@ public class IRBuilder extends ASTVisitor {
                 AssignmentExpressionNode assign = new AssignmentExpressionNode(lhs,it.init,it.pos);
                 assign.accept(this);
             }
-            System.out.println(it.type);
+            //System.out.println(it.type);
             global_info.append(" = dso_local global ").append(getter.getType(it.type,it.dim,null)).append((!it.type.equals("int")&&!it.type.equals("bool")&&!it.type.equals("string"))?" zeroinitializer \n":((it.dim == 0&&!it.type.equals("string"))?" 0\n":" null\n"));
             it.info_for_global = global_info.toString();
             return;
@@ -122,7 +122,8 @@ public class IRBuilder extends ASTVisitor {
             //System.out.println(type);
             AllocaInstruction alloc = new AllocaInstruction(reg_name.toString(), getter.getType(it.type,it.dim,null));
             current_block.addInstruction(alloc);
-            if (it.init.get_value) {
+            if(it.init.get_reg!=null && it.init.get_reg.equals("kunkun_not_malloc")){}
+            else if (it.init.get_value) {
                 ValueUnit unit = it.init.valueIR.values.get(0);
                 StoreInstruction store;
                 if(it.type.equals("string")) {
@@ -148,6 +149,14 @@ public class IRBuilder extends ASTVisitor {
     @Override
     public void visit(FunctionDefNode it) {
         current_scope = new Scope(current_scope);
+        if(it.belong!=null){
+            //System.out.println(it.belong.name);
+            DeclarationNode declaration = new DeclarationNode("this",null,it.pos);
+            declaration.type = it.belong.name;
+            declaration.dim = 1;
+            ParameterNode self = new ParameterNode(it.pos,it.belong.name,1,declaration);
+            it.parameterlist.add(0,self);
+        }
         current_scope.function_paras_defined = true;
         current_function = new FunctionIR(it);
         llvm.functions.put(it.name, current_function);//收集函数定义
@@ -155,6 +164,9 @@ public class IRBuilder extends ASTVisitor {
         StringBuilder reg_name = new StringBuilder();
         reg_name.append("%");
         it.parameterlist.forEach(a -> {
+            while(reg_name.length()>1){
+                reg_name.deleteCharAt(reg_name.length()-1);
+            }
             reg_name.append(a.declare.name);
             if(current_scope.containVariable(a.declare.name,true)){
                 int last_max = variable_name_to_count.get(a.declare.name);
@@ -188,21 +200,39 @@ public class IRBuilder extends ASTVisitor {
     @Override
     public void visit(ClassDefNode it) {
         current_scope = new Scope(current_scope);
+        current_scope.is_class = true;
+        current_scope.class_name = it.name;
         ClassIR cls = new ClassIR(it);
-        it.methoddefs.forEach(a -> {
-            a.accept(this);
-            cls.methods.add(new FunctionIR(a));
-        });
         it.vardefs.forEach(a -> {
             //a.declarations.forEach(b -> b.accept(this));
             a.declarations.forEach(b -> {
                 cls.element_names.add(b.name);
                 cls.elements.add(b);
                 //System.out.println(b.name);
+                StringBuilder reg_name = new StringBuilder();
+                if(current_scope.parent==null)reg_name.append("@");
+                else reg_name.append("%");
+                reg_name.append(b.name);
+                if(variable_name_to_count.containsKey(b.name)){
+                    int last_max = variable_name_to_count.get(b.name);
+                    variable_name_to_count.replace(b.name,last_max+1);
+                    reg_name.append(last_max+1);
+                    current_scope.variable_name_to_reg_name.put(b.name,reg_name.toString());
+                }
+                else {
+                    current_scope.variable_name_to_reg_name.put(b.name,reg_name.toString());
+                    variable_name_to_count.put(b.name,0);
+                }
+                current_scope.defineVariable(b.name,b,b.pos);
             });
 //            cls.elements.addAll(a.declarations);
         });
         llvm.classes.put(it.name, cls);//收集类定义
+        it.methoddefs.forEach(a -> {
+            //System.out.println(a.belong.name);
+            a.accept(this);
+            cls.methods.add(new FunctionIR(a));
+        });
         current_scope = current_scope.parent;
     }
     @Override
@@ -273,26 +303,61 @@ public class IRBuilder extends ASTVisitor {
         //System.out.println("function call");
         //System.out.println(it.func.name);
         //System.out.println(it.object);
-        it.object.is_function = it.func;
+        it.object.dot_function = it.func;
         it.object.accept(this);
+        StringBuilder self = null;
         int call_reg;
         if (it.func.returntype.equals("void")) call_reg = 0;
         else call_reg = call_statement_count++;
         //System.out.println("NAME = " + it.func.name);
         CallInstruction call = new CallInstruction(getter.getType(it.func.returntype, it.func.returndim,null), it.func.name, call_reg);
+        //System.out.println(it.object.getClass());
+        //System.out.println(((MemberCallExpressionNode)it.object).object.type);
+        if(it.object.getClass().toString().equals("class ast.MemberCallExpressionNode")&&((MemberCallExpressionNode)it.object).object.type.equals("string")){
+            if(it.func.name.equals("substring"))call.func_name = "string_substring";
+            else if(it.func.name.equals("parseInt"))call.func_name = "string_parseInt";
+            else if(it.func.name.equals("length"))call.func_name = "string_length";
+            else if(it.func.name.equals("ord"))call.func_name = "string_ord";
+            ((MemberCallExpressionNode)it.object).object.dot_function = null;
+            ((MemberCallExpressionNode)it.object).object.accept(this);
+            call.para.add("i8* "+((MemberCallExpressionNode)it.object).object.get_reg);
+        }else {
+            if(!it.object.struct_name.isEmpty()||!it.name_index_in_class.isEmpty()){
+                String last_reg = it.object.get_reg;
+                if(it.object.struct_name.size()>=2){
+                    StringBuilder next_reg_first = new StringBuilder();
+                    next_reg_first.append("%").append(current_function.reg_count++);
+                    GetElementPtrInstruction gep_first = new GetElementPtrInstruction(it.object.struct_name.get(0),next_reg_first.toString(),last_reg,it.object.name_index_in_class.get(0));
+                    current_block.addInstruction(gep_first);
+                    last_reg = next_reg_first.toString();
+                    for(int i = 1;i<it.object.struct_name.size()-1;++i){
+                        StringBuilder next_reg = new StringBuilder();
+                        next_reg.append("%").append(current_function.reg_count++);
+                        GetElementPtrInstruction gep = new GetElementPtrInstruction(it.object.struct_name.get(i),next_reg.toString(),last_reg,it.object.name_index_in_class.get(i));
+                        current_block.addInstruction(gep);
+                        last_reg = next_reg.toString();
+                        //System.out.println(it.object.name_index_in_class.get(i));
+                        //System.out.println(it.object.struct_name.get(i));
+                    }
+                }
+                self = new StringBuilder();
+                self.append("%struct.").append(it.object.struct_name.get(it.object.struct_name.size()-1)).append("* ");
+                self.append(last_reg);
+                //System.out.println(self.toString());
+            }
+            if(self!=null)call.class_belong_info = self.toString();
+        }
         it.auguments.forEach(a -> {
             a.accept(this);
             StringBuilder para = new StringBuilder();
             //System.out.println(llvm.stringConstants.get(a.get_reg)+"\t"+a.get_reg);
-            if(a.type.equals("string")&&a.get_value)para.append(getter.getType(a.type,a.dim,null)+" ").append(getter.getStringPointer(llvm.stringConstants.get(a.get_reg),a.get_reg));
+            if(a.type.equals("string")&&a.get_value) para.append(getter.getType(a.type, a.dim, null)).append(" ").append(getter.getStringPointer(llvm.stringConstants.get(a.get_reg),a.get_reg));
+            else if(a.get_value) para.append(getter.getType(a.type,a.dim,a.get_reg)).append(" ").append(a.type.equals("int")?a.valueIR.values.get(0).number_value:a.valueIR.values.get(0).bool_value);
             else para.append(getter.getType(a.type,a.dim,a.get_reg)).append(" ").append(a.get_reg);
             call.para.add(para.toString());
         });
         current_block.addInstruction(call);
-        StringBuilder callx = new StringBuilder();
-        callx.append("%");
-        callx.append("call").append(call_reg);
-        it.get_reg = callx.toString();
+        it.get_reg = "%" + "call" + call_reg;
     }
 
     @Override
@@ -418,10 +483,20 @@ public class IRBuilder extends ASTVisitor {
 
     @Override
     public void visit(PrimaryExpressionNode it) {
-        if(it.is_function!=null)return;
+        if(it.dot_function!=null)return;
         if (it.exprtype == PrimaryExpressionNode.ExpressionType.identifierExpr) {
             Scope destination = current_scope.findScopeContaining(it.primaryExpression);
             String reg_name = destination.variable_name_to_reg_name.get(it.primaryExpression);//本身含有% @
+            if(destination.is_class){
+                PrimaryExpressionNode object_this = new PrimaryExpressionNode(it.pos,"this");
+                object_this.exprtype = PrimaryExpressionNode.ExpressionType.identifierExpr;
+                object_this.type = destination.class_name;
+                MemberCallExpressionNode membercall = new MemberCallExpressionNode(it.pos,object_this,it.primaryExpression);
+                membercall.visited_as_lhs = it.visited_as_lhs;
+                membercall.accept(this);
+                it.get_reg = membercall.get_reg;
+                return;
+            }
             if (!it.visited_as_lhs) {
                 LoadInstruction load = new LoadInstruction(current_function.reg_count++, (current_function.para_names.contains("%"+it.primaryExpression) ? ("%"+it.primaryExpression + ".addr") : reg_name.toString()), getter.getType(it.type, it.dim,null));
                 current_block.addInstruction(load);
@@ -481,7 +556,7 @@ public class IRBuilder extends ASTVisitor {
     }
     @Override
     public void visit(BinaryExpressionNode it) {
-        if(false){
+        if(false){//todo
             it.lhs.accept(this);
             it.rhs.accept(this);
             it.get_value = true;
@@ -708,7 +783,7 @@ public class IRBuilder extends ASTVisitor {
         it.lhs.accept(this);
         it.lhs.visited_as_lhs = false;
         it.rhs.accept(this);
-        if (it.rhs.get_value) {
+        if(it.rhs.get_reg!=null && it.rhs.get_reg.equals("kunkun_not_malloc")){}else if (it.rhs.get_value) {
             //System.out.println("Store the value");
             StoreInstruction store = new StoreInstruction(it.rhs.valueIR.values.get(0), getter.getType(it.rhs.type,it.rhs.dim,it.rhs.get_reg),it.lhs.get_reg);
             current_block.addInstruction(store);
@@ -730,22 +805,48 @@ public class IRBuilder extends ASTVisitor {
 
     @Override
     public void visit(MemberCallExpressionNode it) {
-        if(it.is_function != null){
-
+        if(it.dot_function != null){
+            it.object.dot_function = it.dot_function;
+            it.object.accept(this);
+            //System.out.print("type\t");
+             //System.out.println(it.object.type);
+             //System.out.print("id\t");
+             //System.out.println(it.id);
+             //System.out.print("index\t");
+            ClassIR object_class = llvm.classes.get(it.object.type);
+            if(object_class!=null) {
+                 //System.out.println(object_class.element_names.indexOf(it.id));
+                it.object.name_index_in_class.add(object_class.element_names.indexOf(it.id));
+                it.object.struct_name.add(it.object.type);
+                //System.out.println(object_class.element_names.indexOf(it.id));
+                 //it.struct_name.forEach(System.out::println);
+                 //it.name_index_in_class.forEach(System.out::println);
+                 //System.out.print("\n");
+            }
+            //System.out.println(it.object.getClass().toString());
+            if((it.object.getClass().toString()).equals("class ast.PrimaryExpressionNode")){
+                Scope destination = current_scope.findScopeContaining(((PrimaryExpressionNode)it.object).primaryExpression);
+                it.object.get_reg = destination.variable_name_to_reg_name.get(((PrimaryExpressionNode)it.object).primaryExpression);
+                //System.out.println("Hello "+ it.get_reg);
+            }
+            it.object.name_index_in_class.forEach(a->it.name_index_in_class.add(a));
+            it.object.struct_name.forEach(a->it.struct_name.add(a));
+            it.get_reg = it.object.get_reg;
         }
         else{
             //System.out.println("member call");
             ClassIR object_class = llvm.classes.get(it.object.type);
-            //System.out.println(it.id);
+            //System.out.println(it.object.type);
             int index = object_class.element_names.indexOf(it.id);
             //System.out.println(index);
             it.object.visited_as_lhs = true;
+            it.object.dot_function = null;
             it.object.accept(this);
             it.object.visited_as_lhs = false;
             StringBuilder resreg = new StringBuilder();
             resreg.append("%");
             resreg.append(current_function.reg_count++);
-            GetElementPtrInstruction gep = new GetElementPtrInstruction(it.object.type, resreg.toString(), it.object.get_reg, index);
+            GetElementPtrInstruction gep = new GetElementPtrInstruction(object_class.classdef.name, resreg.toString(), it.object.get_reg, index);
             current_block.addInstruction(gep);//get a pointer to pointer, that is pointer2
             if(!it.visited_as_lhs){
                 LoadInstruction load_ptr1 = new LoadInstruction(current_function.reg_count++, resreg.toString(), getter.getType(object_class.elements.get(index).type,object_class.elements.get(index).dim,null));
@@ -908,6 +1009,8 @@ public class IRBuilder extends ASTVisitor {
                 loop.accept(this);
                 array.accept(this);
                 it.get_reg = array.get_reg;
+            }else {
+                it.get_reg = "kunkun_not_malloc";
             }
 
 //        } else {//并且mx的所有数组都是先alloca一个指针,这种写法不能适应mx的可变长数组，比如一个二维数组int[3][]，我的三个一维数组的维度是可以不相同的。

@@ -505,7 +505,7 @@ public class SemanticChecker extends ASTVisitor {
                 } else throw new SemanticError("only array object can call size function", it.pos);
             }
         }
-        if (symbols.classTypes.get(it.object.type).methodmap.containsKey(it.id)) {
+        if (it.should_be_function && symbols.classTypes.get(it.object.type).methodmap.containsKey(it.id)) {
             it.is_function = symbols.classTypes.get(it.object.type).methodmap.get(it.id);
         }
         if (symbols.classTypes.get(it.object.type).variablemap.containsKey(it.id)) {

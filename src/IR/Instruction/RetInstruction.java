@@ -22,7 +22,7 @@ public class RetInstruction extends InstructionIR {
         if(return_void) return "\tret void\n";
         if(value == null){
             StringBuilder ret_ = new StringBuilder();
-            ret_.append("\tret ").append(type).append(" %").append(register).append("\n");
+            ret_.append("\tret ").append(type).append(" ").append(register).append("\n");
             return ret_.toString();
         }
         else {

@@ -56,7 +56,7 @@ public class GetElementPtrInstruction extends InstructionIR{
         }
         else if(for_struct)
             gep.append("\t").append(result_reg).append(" = getelementptr inbounds %struct.").append(type).append(", %struct.").append(type).append("* ").append(instance_reg).append(", i32 0, i32 ").append(index).append("\n");
-        else gep.append("\t%").append(result_reg).append(" = getelementptr inbounds [").append(length).append(" x i8], [").append(length).append(" x i8]* @").append(instance_reg).append(", i32 0, i32 0\n");
+        else gep.append("\t").append(result_reg).append(" = getelementptr inbounds [").append(length).append(" x i8], [").append(length).append(" x i8]* @").append(instance_reg).append(", i32 0, i32 0\n");
         //System.out.println("HELLO"+gep.toString());
         return gep.toString();
     }

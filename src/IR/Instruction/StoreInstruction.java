@@ -31,7 +31,7 @@ public class StoreInstruction extends InstructionIR {
             else if(to_type.equals("string")||to_type.equals("i8*")) store.append("\tstore ").append(to_type).append(" ").append(value.string_value).append(", ").append(to_type);
             else if(to_type.equals("i1")) store.append("\tstore ").append(to_type).append(" ").append(value.bool_value).append(", ").append(to_type);
         }else {
-            // System.out.println(reg.substring(0,4));
+            //System.out.println(reg);
             if(reg.length()>=5 && reg.substring(0,4).equals(".str"))store.append("\tstore ").append(from_type).append(" ").append(reg).append(", ").append(to_type);
             else store.append("\tstore ").append(from_type).append(" ").append(reg).append(", ").append(to_type);
         }

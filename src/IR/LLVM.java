@@ -42,29 +42,31 @@ public class LLVM {
             text.deleteCharAt(text.length()-1);
             text.deleteCharAt(text.length()-1);
             text.append("}\n");
-            for(FunctionIR fcdef: clsdef.methods){
-                text.append("define ").append(getter.getType(fcdef.funcdef.returntype,fcdef.funcdef.returndim,null)).append(" @").append(fcdef.funcdef.name).append("(");
-                int count = 0;
-                text.append("%struct.").append(clsdef.classdef.name).append(" %").append(count);
-                count = count + 1;
-                text.append(", ");
-                for(ParameterNode para: fcdef.funcdef.parameterlist){
-                    text.append(getter.getType(para.type,para.dim,null)).append(" %").append(count);
-                    count = count + 1;
-                    text.append(", ");
-                }
-                text.deleteCharAt(text.length() - 1);
-                text.deleteCharAt(text.length() - 1);
-                text.append("){\n");
-                if(fcdef.funcdef.stmts != null){
-                    //先把所有的statment收集到StatementIR里面
-                    fcdef.blocks.forEach(a->{
-                        text.append(a.block_id).append(":\n");
-                        a.instrs.forEach(b->text.append(b.toString()));
-                    });
-                }
-                text.append("}\n");
-            }
+//            for(FunctionIR fcdef: clsdef.methods){
+//                text.append("define ").append(getter.getType(fcdef.funcdef.returntype,fcdef.funcdef.returndim,null)).append(" @").append(fcdef.funcdef.name).append("(");
+//                int count = 0;
+//                System.out.println(fcdef.para_names.size());
+//                System.out.println(fcdef.funcdef.parameterlist.size());
+//                for(ParameterNode para: fcdef.funcdef.parameterlist){
+//                    text.append(getter.getType(para.type,para.dim,null)).append(" ").append(fcdef.para_names.get(count));
+//                    count = count + 1;
+//                    text.append(", ");
+//                }
+//                if(!fcdef.funcdef.parameterlist.isEmpty()){
+//                    text.deleteCharAt(text.length()-1);
+//                    text.deleteCharAt(text.length()-1);
+//                }
+//                text.append("){\n");
+//                if(fcdef.funcdef.stmts != null){
+//                    //先把所有的statment收集到StatementIR里面
+//                    fcdef.blocks.forEach(a->{
+//                        //System.out.println("new block");
+//                        text.append(a.block_id).append(":\n");
+//                        a.instrs.forEach(b->text.append(b.toString()));
+//                    });
+//                }
+//                text.append("}\n");
+//            }
         }
         text.append("\n");
         //System.out.println(text.toString());
