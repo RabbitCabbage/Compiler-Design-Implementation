@@ -164,6 +164,14 @@ public class IRBuilder extends ASTVisitor {
         StringBuilder reg_name = new StringBuilder();
         reg_name.append("%");
         it.parameterlist.forEach(a -> {
+            //System.out.println(reg_name.toString());
+            if(current_scope.containVariable(a.declare.name,true))reg_name.append(a.declare.name).append(variable_name_to_count.get(a.declare.name)+1);
+            else reg_name.append(a.declare.name);
+            current_function.para_names.add(reg_name.toString());
+            AllocaInstruction alloca = new AllocaInstruction("%"+a.declare.name + ".addr", getter.getType(a.type, a.dim,null));
+            current_block.addInstruction(alloca);
+            StoreInstruction store = new StoreInstruction(reg_name.toString(), getter.getType(a.type, a.dim,null), "%"+a.declare.name + ".addr",getter.getType(a.type, a.dim,null));
+            current_block.addInstruction(store);
             while(reg_name.length()>1){
                 reg_name.deleteCharAt(reg_name.length()-1);
             }
@@ -171,20 +179,15 @@ public class IRBuilder extends ASTVisitor {
             if(current_scope.containVariable(a.declare.name,true)){
                 int last_max = variable_name_to_count.get(a.declare.name);
                 variable_name_to_count.replace(a.declare.name,last_max+1);
-                reg_name.append(last_max+1);
+                reg_name.append(".addr");
                 current_scope.variable_name_to_reg_name.put(a.declare.name,reg_name.toString());
             }
             else {
+                reg_name.append(".addr");
                 current_scope.variable_name_to_reg_name.put(a.declare.name,reg_name.toString());
                 variable_name_to_count.put(a.declare.name,0);
             }
             current_scope.defineVariable(a.declare.name,a.declare,a.declare.pos);
-            //System.out.println(reg_name.toString());
-            current_function.para_names.add(reg_name.toString());
-            AllocaInstruction alloca = new AllocaInstruction("%"+a.declare.name + ".addr", getter.getType(a.type, a.dim,null));
-            current_block.addInstruction(alloca);
-            StoreInstruction store = new StoreInstruction(reg_name.toString(), getter.getType(a.type, a.dim,null), "%"+a.declare.name + ".addr",getter.getType(a.type, a.dim,null));
-            current_block.addInstruction(store);
         });
         if(it.name.equals("main")){
             CallInstruction call_init_global = new CallInstruction("void","kunkun_initialize_global_declarations",0);
@@ -193,6 +196,21 @@ public class IRBuilder extends ASTVisitor {
         it.stmts.accept(this);//访问每一个具体的语句，把它翻译成llvm
         //System.out.print("function statement end ");
         //System.out.println(current_block.block_id);
+        if(current_block.instrs.isEmpty()){
+            if(current_function.funcdef.returntype.equals("void"))current_block.addInstruction(new RetInstruction(null,null,true));
+            else if(current_function.funcdef.name.equals("main")){
+                ValueUnit unit = new ValueUnit(0,null,null);
+                current_block.addInstruction(new RetInstruction(unit,"i32"));
+            }
+        } else {
+            if(!current_block.instrs.get(current_block.instrs.size() - 1).getClass().toString().equals("class IR.Instruction.RetInstruction")){
+                if(current_function.funcdef.returntype.equals("void"))current_block.addInstruction(new RetInstruction(null,null,true));
+                else if(current_function.funcdef.name.equals("main")){
+                    ValueUnit unit = new ValueUnit(0,null,null);
+                    current_block.addInstruction(new RetInstruction(unit,"i32"));
+                }
+            }
+        }
         current_function.blocks.add(current_block);
         current_scope = current_scope.parent;
     }
@@ -371,7 +389,9 @@ public class IRBuilder extends ASTVisitor {
         BrInstruction br_to_condition = new BrInstruction(null,"while.cond"+count.toString(),null);
         current_block.addInstruction(br_to_condition);
         current_function.blocks.add(current_block);
+        //System.out.println(current_block.block_id);
         BlockIR condition = new BlockIR("while.cond"+count.toString());
+        current_block = condition;
         it.condition.accept(this);
         String cond = it.condition.get_reg;
         BrInstruction cond_br_body = new BrInstruction(cond, "while.body" + count.toString(), "while.end" + count.toString());
@@ -754,10 +774,80 @@ public class IRBuilder extends ASTVisitor {
             String type = getter.getType(it.lhs.type, it.lhs.dim,it.lhs.get_reg);
             //System.out.println(lhs_reg);
             //System.out.println(rhs_reg);
-            BinaryInstruction binary = new BinaryInstruction(it.opcode, lhs_reg, rhs_reg, type, res_reg);
-            it.get_reg = binary.res_toString();
-            //System.out.println(it.get_reg);
-            current_block.addInstruction(binary);
+            if(it.type.equals("int")||it.type.equals("bool")){
+                BinaryInstruction binary = new BinaryInstruction(it.opcode, lhs_reg, rhs_reg, type, res_reg);
+                it.get_reg = binary.res_toString();
+                //System.out.println(it.get_reg);
+                current_block.addInstruction(binary);
+            } else if(it.type.equals("string")){
+                CallInstruction call = new CallInstruction("","",call_statement_count++);
+                if(it.opcode.equals("+")){
+                    call.func_name = "string_concat";
+                    call.return_type = "i8*";
+                    StringBuilder para_lhs = new StringBuilder();
+                    para_lhs.append("i8* ").append(it.lhs.get_reg);
+                    StringBuilder para_rhs = new StringBuilder();
+                    para_rhs.append("i8* ").append(it.rhs.get_reg);
+                    call.para.add(para_lhs.toString());
+                    call.para.add(para_rhs.toString());
+                } else if(it.opcode.equals("==")){
+                    call.func_name = "string_equal";
+                    call.return_type = "i1";
+                    StringBuilder para_lhs = new StringBuilder();
+                    para_lhs.append("i8* ").append(it.lhs.get_reg);
+                    StringBuilder para_rhs = new StringBuilder();
+                    para_rhs.append("i8* ").append(it.rhs.get_reg);
+                    call.para.add(para_lhs.toString());
+                    call.para.add(para_rhs.toString());
+                }else if(it.opcode.equals("!=")){
+                    call.func_name = "string_nequal";
+                    call.return_type = "i1";
+                    StringBuilder para_lhs = new StringBuilder();
+                    para_lhs.append("i8* ").append(it.lhs.get_reg);
+                    StringBuilder para_rhs = new StringBuilder();
+                    para_rhs.append("i8* ").append(it.rhs.get_reg);
+                    call.para.add(para_lhs.toString());
+                    call.para.add(para_rhs.toString());
+                }else if(it.opcode.equals("<")){
+                    call.func_name = "string_lessthan";
+                    call.return_type = "i1";
+                    StringBuilder para_lhs = new StringBuilder();
+                    para_lhs.append("i8* ").append(it.lhs.get_reg);
+                    StringBuilder para_rhs = new StringBuilder();
+                    para_rhs.append("i8* ").append(it.rhs.get_reg);
+                    call.para.add(para_lhs.toString());
+                    call.para.add(para_rhs.toString());
+                }else if(it.opcode.equals(">")){
+                    call.func_name = "string_greaterthan";
+                    call.return_type = "i8*";
+                    StringBuilder para_lhs = new StringBuilder();
+                    para_lhs.append("i8* ").append(it.lhs.get_reg);
+                    StringBuilder para_rhs = new StringBuilder();
+                    para_rhs.append("i8* ").append(it.rhs.get_reg);
+                    call.para.add(para_lhs.toString());
+                    call.para.add(para_rhs.toString());
+                }else if(it.opcode.equals("<=")){
+                    call.func_name = "string_notgreaterthan";
+                    call.return_type = "i1";
+                    StringBuilder para_lhs = new StringBuilder();
+                    para_lhs.append("i8* ").append(it.lhs.get_reg);
+                    StringBuilder para_rhs = new StringBuilder();
+                    para_rhs.append("i8* ").append(it.rhs.get_reg);
+                    call.para.add(para_lhs.toString());
+                    call.para.add(para_rhs.toString());
+                }else if(it.opcode.equals(">=")){
+                    call.func_name = "string_notlessthan";
+                    call.return_type = "i1";
+                    StringBuilder para_lhs = new StringBuilder();
+                    para_lhs.append("i8* ").append(it.lhs.get_reg);
+                    StringBuilder para_rhs = new StringBuilder();
+                    para_rhs.append("i8* ").append(it.rhs.get_reg);
+                    call.para.add(para_lhs.toString());
+                    call.para.add(para_rhs.toString());
+                }
+                current_block.addInstruction(call);
+                it.get_reg = call.res_toString();
+            }
         }
     }
 
@@ -829,8 +919,8 @@ public class IRBuilder extends ASTVisitor {
                 it.object.get_reg = destination.variable_name_to_reg_name.get(((PrimaryExpressionNode)it.object).primaryExpression);
                 //System.out.println("Hello "+ it.get_reg);
             }
-            it.object.name_index_in_class.forEach(a->it.name_index_in_class.add(a));
-            it.object.struct_name.forEach(a->it.struct_name.add(a));
+            it.name_index_in_class.addAll(it.object.name_index_in_class);
+            it.struct_name.addAll(it.object.struct_name);
             it.get_reg = it.object.get_reg;
         }
         else{
@@ -863,36 +953,36 @@ public class IRBuilder extends ASTVisitor {
     public void visit(PrefixExpressionNode it){
         if(it.op.equals("++")){
             it.object.accept(this);
-            BinaryInstruction add = new BinaryInstruction("+", it.object.get_reg, "1", getter.getType(it.object.type,it.object.dim,it.object.get_reg),binary_expression_count++);
+            BinaryInstruction add = new BinaryInstruction("+", (it.object.get_value? String.valueOf(it.object.valueIR.values.get(0).number_value) : it.object.get_reg), "1", getter.getType(it.object.type,it.object.dim,it.object.get_reg), binary_expression_count++);
             current_block.addInstruction(add);
             StoreInstruction store = new StoreInstruction(add.res_toString(),getter.getType(it.object.type,it.object.dim,null),  last_identifier_expression_reg,getter.getType(it.object.type,it.object.dim,null));
             current_block.addInstruction(store);
             it.get_reg = add.res_toString();
         } else if(it.op.equals("--")) {
             it.object.accept(this);
-            BinaryInstruction sub = new BinaryInstruction("-", it.object.get_reg, "1", getter.getType(it.object.type,it.object.dim,it.object.get_reg), binary_expression_count++);
+            BinaryInstruction sub = new BinaryInstruction("-", (it.object.get_value? String.valueOf(it.object.valueIR.values.get(0).number_value) :it.object.get_reg), "1", getter.getType(it.object.type,it.object.dim,it.object.get_reg), binary_expression_count++);
             current_block.addInstruction(sub);
             StoreInstruction store = new StoreInstruction(sub.res_toString(), getter.getType(it.object.type,it.object.dim,null),   last_identifier_expression_reg,getter.getType(it.object.type,it.object.dim,null));
             current_block.addInstruction(store);
             it.get_reg = sub.res_toString();
         }else if (it.op.equals("~")){
             it.object.accept(this);
-            BinaryInstruction xor = new BinaryInstruction("^",it.object.get_reg,"-1",getter.getType(it.object.type,it.object.dim,it.object.get_reg),binary_expression_count++);
+            BinaryInstruction xor = new BinaryInstruction("^",(it.object.get_value? String.valueOf(it.object.valueIR.values.get(0).number_value) :it.object.get_reg),"-1",getter.getType(it.object.type,it.object.dim,it.object.get_reg),binary_expression_count++);
             current_block.addInstruction(xor);
             it.get_reg = xor.res_toString();
         } else if (it.op.equals("!")){
             it.object.accept(this);
-            BinaryInstruction xor = new BinaryInstruction("^",it.object.get_reg,"1",getter.getType(it.object.type,it.object.dim,it.object.get_reg),binary_expression_count++);
+            BinaryInstruction xor = new BinaryInstruction("^",(it.object.get_value? String.valueOf(it.object.valueIR.values.get(0).number_value) :it.object.get_reg),"1",getter.getType(it.object.type,it.object.dim,it.object.get_reg),binary_expression_count++);
             current_block.addInstruction(xor);
             it.get_reg = xor.res_toString();
         } else if(it.op.equals("+")){
             it.object.accept(this);
-            BinaryInstruction add = new BinaryInstruction("+",it.object.get_reg,"0",getter.getType(it.object.type,it.object.dim,it.object.get_reg),binary_expression_count++);
+            BinaryInstruction add = new BinaryInstruction("+",(it.object.get_value? String.valueOf(it.object.valueIR.values.get(0).number_value) :it.object.get_reg),"0",getter.getType(it.object.type,it.object.dim,it.object.get_reg),binary_expression_count++);
             current_block.addInstruction(add);
             it.get_reg = add.res_toString();
         } else if(it.op.equals("-")){
             it.object.accept(this);
-            BinaryInstruction sub = new BinaryInstruction("-","0",it.object.get_reg,getter.getType(it.object.type,it.object.dim,it.object.get_reg),binary_expression_count++);
+            BinaryInstruction sub = new BinaryInstruction("-","0",(it.object.get_value? String.valueOf(it.object.valueIR.values.get(0).number_value) :it.object.get_reg),getter.getType(it.object.type,it.object.dim,it.object.get_reg),binary_expression_count++);
             current_block.addInstruction(sub);
             it.get_reg = sub.res_toString();
         }
@@ -902,15 +992,23 @@ public class IRBuilder extends ASTVisitor {
     public void visit(SuffixExpressionNode it){
         if(it.op.equals("++")){
             it.object.accept(this);
-            it.get_reg = it.object.get_reg;
-            BinaryInstruction add = new BinaryInstruction("+", it.object.get_reg, "1", getter.getType(it.object.type,it.object.dim,it.object.get_reg),binary_expression_count++);
+            if(!it.object.get_value)it.get_reg = it.object.get_reg;
+            else {
+                it.get_value = true;
+                it.valueIR = it.object.valueIR;
+            }
+            BinaryInstruction add = new BinaryInstruction("+", (it.object.get_value? String.valueOf(it.object.valueIR.values.get(0).number_value) :it.object.get_reg), "1", getter.getType(it.object.type,it.object.dim,it.object.get_reg),binary_expression_count++);
             current_block.addInstruction(add);
             StoreInstruction store = new StoreInstruction(add.res_toString(), getter.getType(it.object.type,it.object.dim,null),   last_identifier_expression_reg,getter.getType(it.object.type,it.object.dim,null));
             current_block.addInstruction(store);
         } else if(it.op.equals("--")) {
             it.object.accept(this);
-            it.get_reg = it.object.get_reg;
-            BinaryInstruction sub = new BinaryInstruction("-", it.object.get_reg, "1", getter.getType(it.object.type,it.object.dim,it.object.get_reg), binary_expression_count++);
+            if(!it.object.get_value)it.get_reg = it.object.get_reg;
+            else {
+                it.get_value = true;
+                it.valueIR = it.object.valueIR;
+            }
+            BinaryInstruction sub = new BinaryInstruction("-", (it.object.get_value? String.valueOf(it.object.valueIR.values.get(0).number_value) :it.object.get_reg), "1", getter.getType(it.object.type,it.object.dim,it.object.get_reg), binary_expression_count++);
             current_block.addInstruction(sub);
             StoreInstruction store = new StoreInstruction(sub.res_toString(), getter.getType(it.object.type,it.object.dim,null),   last_identifier_expression_reg,getter.getType(it.object.type,it.object.dim,null));
             current_block.addInstruction(store);
@@ -924,7 +1022,12 @@ public class IRBuilder extends ASTVisitor {
                 first.accept(this);
                 CallInstruction call = new CallInstruction("i8*", "malloc_", call_statement_count++);
                 StringBuilder para = new StringBuilder();
-                para.append("i32 ").append(first.valueIR.values.get(0).number_value*getter.getSize(it.type,it.dim));
+                if(first.get_value)para.append("i32 ").append(first.valueIR.values.get(0).number_value*getter.getSize(it.type,it.dim));
+                else {
+                    BinaryInstruction mul = new BinaryInstruction("*",first.get_reg,String.valueOf(getter.getSize(it.type,it.dim)),"i32",binary_expression_count++);
+                    current_block.addInstruction(mul);
+                    para.append("i32 ").append(mul.res_toString());
+                }
                 call.para.add(para.toString());
                 current_block.addInstruction(call);
                 StringBuilder call_reg = new StringBuilder();

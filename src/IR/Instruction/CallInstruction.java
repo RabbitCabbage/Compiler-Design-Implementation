@@ -32,4 +32,10 @@ public class CallInstruction extends InstructionIR{
         call.append(")\n");
         return call.toString();
     }
+
+    public String res_toString(){
+        StringBuilder call = new StringBuilder();
+        call.append("%call").append(call_reg);
+        return call.toString();
+    }
 }
