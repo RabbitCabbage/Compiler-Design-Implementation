@@ -2,7 +2,6 @@ package IR;
 
 import ast.ClassDefNode;
 import ast.DeclarationNode;
-import org.antlr.v4.codegen.model.decl.Decl;
 
 import java.util.ArrayList;
 import java.util.HashMap;

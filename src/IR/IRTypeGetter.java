@@ -1,5 +1,6 @@
 package IR;
 
+import ast.ClassDefNode;
 import ast.DeclarationNode;
 import frontend.Symbols;
 
@@ -35,15 +36,12 @@ public class IRTypeGetter {
         return gep.toString();
     }
     public int getSize(String typename,int dim) {
-        if(dim >= 2) return 8;
+        if(dim >= 1) return 8;
         if(typename.equals("int")||typename.equals("i32"))return 4;
         if(typename.equals("void"))return 0;
-        else return 4;//todo
-    }
-
-    public int getAlign(String typename){
-        if(typename.equals("int"))return 4;
-        if(typename.equals("void"))return 0;
-        else return 0;//todo
+        else {
+            ClassDefNode cls = symbols.classTypes.get(typename);
+            return cls.variablemap.size()*8;
+        }
     }
 }

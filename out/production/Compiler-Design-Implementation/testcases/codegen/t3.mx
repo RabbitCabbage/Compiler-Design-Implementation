@@ -35,7 +35,7 @@ int i;
 int j;
 
 void origin(int N)
-{   
+{
     head = 0;
     tail = 0;
 	step = new int[N][];
@@ -43,7 +43,7 @@ void origin(int N)
 		step[i] = new int[N];
         for (j = 0; j < N; j ++ )
         step[i][j] = 0;
-    }	
+    }
 }
 
 bool check(int a) {
@@ -75,7 +75,15 @@ int main() {
     dx[5] = -1; dy[5] = 2;
     dx[6] = 1; dy[6] = -2;
     dx[7] = 1; dy[7] = 2;
-    
+    while (head <= tail) {
+        x = xlist[head];
+        y = ylist[head];
+        now = step[x][y];
+        for (j = 0;j < 8;j ++)
+            addList(x + dx[j], y + dy[j]);
+        if (ok == 1) break;
+        head ++;
+    }
     if (ok == 1) println(toString(step[targetx][targety]));
     else print("no solution!\n");
     return 0;

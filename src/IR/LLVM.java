@@ -28,7 +28,14 @@ public class LLVM {
     public String toDotLLVM(){
         StringBuilder text = new StringBuilder();
         for(String regname: stringConstants.keySet()){
-            text.append("@"+regname).append(" = private unnamed_addr constant [").append(stringConstants.get(regname).length()).append(" x i8] "+"c\""+stringConstants.get(regname)+"\""+"\n");
+            text.append(regname).append(" = private unnamed_addr constant [").append(stringConstants.get(regname).length()).append(" x i8] " + "c\"");
+            String constant = stringConstants.get(regname);
+            constant = constant.replace("\\","\\5C");
+            constant = constant.replace("\n","\\0A");
+            constant = constant.replace("\0","\\00");
+            constant = constant.replace("\t","\\09");
+            constant = constant.replace("\"","\\22");
+            text.append(constant).append("\"").append("\n");
         }
         for(var vardef :globalVars.values()){
             text.append(vardef.declare.info_for_global);
@@ -112,7 +119,7 @@ public class LLVM {
                 "declare i8* @string_substring(i8*,i32,i32)\n" +
                 "declare i32 @string_parseInt(i8*)\n" +
                 "declare i32 @string_ord(i8*,i32)\n" +
-                "declare i8* @malloc_(i32)\n" +
+                "declare i8* @malloc_(i32, i32)\n" +
                 "declare i8* @string_concat(i8*,i8*)\n" +
                 "declare i8 @string_equal(i8*,i8*)\n" +
                 "declare i8 @string_nequal(i8*,i8*)\n" +

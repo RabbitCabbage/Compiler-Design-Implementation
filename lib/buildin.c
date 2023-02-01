@@ -28,9 +28,12 @@ char *toString(int i){
     return tmp;
 }
 
-char *malloc_(long long length){
-    char *tmp = (char *)malloc(length);
-    return tmp;
+char *malloc_(int size, int length){
+    char *tmp = (char *)malloc(4+length);
+        memset(tmp+4, 0, length);
+        int *size_ptr = (int *)tmp;
+        *size_ptr = size;
+        return tmp+4;
 }
 
 int getArraySize(char *array){

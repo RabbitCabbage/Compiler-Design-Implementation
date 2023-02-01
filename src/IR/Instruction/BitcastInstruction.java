@@ -14,7 +14,7 @@ public class BitcastInstruction extends InstructionIR{
     @Override
     public String toString(){
         StringBuilder bitcast = new StringBuilder();
-        bitcast.append("\t%").append(result_reg).append(" = bitcast ").append(from_type).append(" %").append(reg_to_cast).append(" to ").append(to_type).append("\n");
+        bitcast.append("\t%").append(result_reg).append(" = bitcast ").append(from_type).append(" ").append(reg_to_cast).append(" to ").append(to_type).append("\n");
         return bitcast.toString();
     }
     public String res_toString(){

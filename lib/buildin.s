@@ -1,11 +1,11 @@
 	.text
-	.file	"builtin.c"
+	.file	"buildin.c"
 	.globl	print                   # -- Begin function print
 	.p2align	4, 0x90
 	.type	print,@function
 print:                                  # @print
 	.cfi_startproc
-# %bb.0:                                # %entry
+# %bb.0:
 	pushq	%rbp
 	.cfi_def_cfa_offset 16
 	.cfi_offset %rbp, -16
@@ -30,7 +30,7 @@ print:                                  # @print
 	.type	println,@function
 println:                                # @println
 	.cfi_startproc
-# %bb.0:                                # %entry
+# %bb.0:
 	pushq	%rbp
 	.cfi_def_cfa_offset 16
 	.cfi_offset %rbp, -16
@@ -55,7 +55,7 @@ println:                                # @println
 	.type	printInt,@function
 printInt:                               # @printInt
 	.cfi_startproc
-# %bb.0:                                # %entry
+# %bb.0:
 	pushq	%rbp
 	.cfi_def_cfa_offset 16
 	.cfi_offset %rbp, -16
@@ -80,7 +80,7 @@ printInt:                               # @printInt
 	.type	printlnInt,@function
 printlnInt:                             # @printlnInt
 	.cfi_startproc
-# %bb.0:                                # %entry
+# %bb.0:
 	pushq	%rbp
 	.cfi_def_cfa_offset 16
 	.cfi_offset %rbp, -16
@@ -105,7 +105,7 @@ printlnInt:                             # @printlnInt
 	.type	getString,@function
 getString:                              # @getString
 	.cfi_startproc
-# %bb.0:                                # %entry
+# %bb.0:
 	pushq	%rbp
 	.cfi_def_cfa_offset 16
 	.cfi_offset %rbp, -16
@@ -133,7 +133,7 @@ getString:                              # @getString
 	.type	getInt,@function
 getInt:                                 # @getInt
 	.cfi_startproc
-# %bb.0:                                # %entry
+# %bb.0:
 	pushq	%rbp
 	.cfi_def_cfa_offset 16
 	.cfi_offset %rbp, -16
@@ -158,7 +158,7 @@ getInt:                                 # @getInt
 	.type	toString,@function
 toString:                               # @toString
 	.cfi_startproc
-# %bb.0:                                # %entry
+# %bb.0:
 	pushq	%rbp
 	.cfi_def_cfa_offset 16
 	.cfi_offset %rbp, -16
@@ -188,23 +188,29 @@ toString:                               # @toString
 	.type	malloc_,@function
 malloc_:                                # @malloc_
 	.cfi_startproc
-# %bb.0:                                # %entry
+# %bb.0:
 	pushq	%rbp
 	.cfi_def_cfa_offset 16
 	.cfi_offset %rbp, -16
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register %rbp
 	subq	$32, %rsp
-	movl	%edi, -4(%rbp)
+	movl	%edi, -20(%rbp)
+	movl	%esi, -4(%rbp)
 	movl	-4(%rbp), %eax
 	addl	$4, %eax
 	movslq	%eax, %rdi
 	callq	malloc
 	movq	%rax, -16(%rbp)
+	movq	-16(%rbp), %rdi
+	addq	$4, %rdi
+	movslq	-4(%rbp), %rdx
+	xorl	%esi, %esi
+	callq	memset
 	movq	-16(%rbp), %rax
-	movq	%rax, -24(%rbp)
-	movl	-4(%rbp), %eax
-	movq	-24(%rbp), %rcx
+	movq	%rax, -32(%rbp)
+	movl	-20(%rbp), %eax
+	movq	-32(%rbp), %rcx
 	movl	%eax, (%rcx)
 	movq	-16(%rbp), %rax
 	addq	$4, %rax
@@ -221,7 +227,7 @@ malloc_:                                # @malloc_
 	.type	getArraySize,@function
 getArraySize:                           # @getArraySize
 	.cfi_startproc
-# %bb.0:                                # %entry
+# %bb.0:
 	pushq	%rbp
 	.cfi_def_cfa_offset 16
 	.cfi_offset %rbp, -16
@@ -245,7 +251,7 @@ getArraySize:                           # @getArraySize
 	.type	string_length,@function
 string_length:                          # @string_length
 	.cfi_startproc
-# %bb.0:                                # %entry
+# %bb.0:
 	pushq	%rbp
 	.cfi_def_cfa_offset 16
 	.cfi_offset %rbp, -16
@@ -269,7 +275,7 @@ string_length:                          # @string_length
 	.type	string_substring,@function
 string_substring:                       # @string_substring
 	.cfi_startproc
-# %bb.0:                                # %entry
+# %bb.0:
 	pushq	%rbp
 	.cfi_def_cfa_offset 16
 	.cfi_offset %rbp, -16
@@ -287,13 +293,11 @@ string_substring:                       # @string_substring
 	movq	%rax, -24(%rbp)
 	movl	-8(%rbp), %eax
 	movl	%eax, -4(%rbp)
-.LBB10_1:                               # %for.cond
-                                        # =>This Inner Loop Header: Depth=1
+.LBB10_1:                               # =>This Inner Loop Header: Depth=1
 	movl	-4(%rbp), %eax
 	cmpl	-12(%rbp), %eax
 	jge	.LBB10_4
-# %bb.2:                                # %for.body
-                                        #   in Loop: Header=BB10_1 Depth=1
+# %bb.2:                                #   in Loop: Header=BB10_1 Depth=1
 	movq	-32(%rbp), %rax
 	movslq	-4(%rbp), %rcx
 	movb	(%rax,%rcx), %al
@@ -302,13 +306,12 @@ string_substring:                       # @string_substring
 	subl	-8(%rbp), %edx
 	movslq	%edx, %rdx
 	movb	%al, (%rcx,%rdx)
-# %bb.3:                                # %for.inc
-                                        #   in Loop: Header=BB10_1 Depth=1
+# %bb.3:                                #   in Loop: Header=BB10_1 Depth=1
 	movl	-4(%rbp), %eax
 	addl	$1, %eax
 	movl	%eax, -4(%rbp)
 	jmp	.LBB10_1
-.LBB10_4:                               # %for.end
+.LBB10_4:
 	movq	-24(%rbp), %rax
 	movl	-12(%rbp), %ecx
 	subl	-8(%rbp), %ecx
@@ -328,7 +331,7 @@ string_substring:                       # @string_substring
 	.type	string_parseInt,@function
 string_parseInt:                        # @string_parseInt
 	.cfi_startproc
-# %bb.0:                                # %entry
+# %bb.0:
 	pushq	%rbp
 	.cfi_def_cfa_offset 16
 	.cfi_offset %rbp, -16
@@ -355,7 +358,7 @@ string_parseInt:                        # @string_parseInt
 	.type	string_ord,@function
 string_ord:                             # @string_ord
 	.cfi_startproc
-# %bb.0:                                # %entry
+# %bb.0:
 	pushq	%rbp
 	.cfi_def_cfa_offset 16
 	.cfi_offset %rbp, -16
@@ -378,7 +381,7 @@ string_ord:                             # @string_ord
 	.type	string_concat,@function
 string_concat:                          # @string_concat
 	.cfi_startproc
-# %bb.0:                                # %entry
+# %bb.0:
 	pushq	%rbp
 	.cfi_def_cfa_offset 16
 	.cfi_offset %rbp, -16
@@ -420,7 +423,7 @@ string_concat:                          # @string_concat
 	.type	string_equal,@function
 string_equal:                           # @string_equal
 	.cfi_startproc
-# %bb.0:                                # %entry
+# %bb.0:
 	pushq	%rbp
 	.cfi_def_cfa_offset 16
 	.cfi_offset %rbp, -16
@@ -450,7 +453,7 @@ string_equal:                           # @string_equal
 	.type	string_nequal,@function
 string_nequal:                          # @string_nequal
 	.cfi_startproc
-# %bb.0:                                # %entry
+# %bb.0:
 	pushq	%rbp
 	.cfi_def_cfa_offset 16
 	.cfi_offset %rbp, -16
@@ -480,7 +483,7 @@ string_nequal:                          # @string_nequal
 	.type	string_lessthan,@function
 string_lessthan:                        # @string_lessthan
 	.cfi_startproc
-# %bb.0:                                # %entry
+# %bb.0:
 	pushq	%rbp
 	.cfi_def_cfa_offset 16
 	.cfi_offset %rbp, -16
@@ -510,7 +513,7 @@ string_lessthan:                        # @string_lessthan
 	.type	string_greaterthan,@function
 string_greaterthan:                     # @string_greaterthan
 	.cfi_startproc
-# %bb.0:                                # %entry
+# %bb.0:
 	pushq	%rbp
 	.cfi_def_cfa_offset 16
 	.cfi_offset %rbp, -16
@@ -540,7 +543,7 @@ string_greaterthan:                     # @string_greaterthan
 	.type	string_notgreaterthan,@function
 string_notgreaterthan:                  # @string_notgreaterthan
 	.cfi_startproc
-# %bb.0:                                # %entry
+# %bb.0:
 	pushq	%rbp
 	.cfi_def_cfa_offset 16
 	.cfi_offset %rbp, -16
@@ -570,7 +573,7 @@ string_notgreaterthan:                  # @string_notgreaterthan
 	.type	string_notlessthan,@function
 string_notlessthan:                     # @string_notlessthan
 	.cfi_startproc
-# %bb.0:                                # %entry
+# %bb.0:
 	pushq	%rbp
 	.cfi_def_cfa_offset 16
 	.cfi_offset %rbp, -16
