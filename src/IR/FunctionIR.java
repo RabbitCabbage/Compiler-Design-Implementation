@@ -9,7 +9,7 @@ public class FunctionIR {
     public ArrayList<String> para_names;
     public ArrayList<BlockIR> blocks;
     public int reg_count = 0;
-    // todo parameters and scope
+    public String IR_name;
     public FunctionIR(FunctionDefNode fc){
         funcdef = fc;
         blocks = new ArrayList<>();

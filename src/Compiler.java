@@ -18,8 +18,8 @@ import util.error.SemanticError;
 
 public class Compiler {
     public static void main(String[] args) throws Exception {
-        InputStream input = System.in;
-//        InputStream input = new FileInputStream("./testcases/codegen/t9.mx");
+//        InputStream input = System.in;
+        InputStream input = new FileInputStream("./testcases/codegen/shortest_path/dijkstra.mx");
 //        InputStream input = new FileInputStream(args[0]);
         try {
             MxLexer lexer = new MxLexer(CharStreams.fromStream(input));

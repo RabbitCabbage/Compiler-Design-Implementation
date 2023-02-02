@@ -4,7 +4,7 @@ import time
 # export CLASSPATH="/mnt/d/Desktop/Compiler-Design-Implementation/antlr-4.10.1-complete.jar:$CLASSPATH"
 
 
-judge_list = open("./testcases/codegen/judgelist.txt").readlines()
+judge_list = open("../testcases/codegen/judgelist.txt").readlines()
 
 cnt = 0
 
@@ -14,7 +14,7 @@ fail_collect = list()
 for judge in judge_list:
     cnt += 1
 
-    code_file = judge.replace("\n", "").replace("./", "./testcases/codegen/")
+    code_file = judge.replace("\n", "").replace("./", "../testcases/codegen/")
     print(code_file)
 
     input_file = "1.in"
@@ -49,12 +49,12 @@ for judge in judge_list:
     std_fp.close()
 
     print("\033[34m Loading finish. Start to run.")
+    #  find ./src -name \"*.java\" -print0|xargs -0 javac -d runContain -cp ./antlr4-runtime-4.10.1.jar
+    os.system("cd .. && find ./src -name \"*.java\" -print0|xargs -0 javac -d runContain -cp antlr4-runtime-4.10.1.jar:antlr4-4.10.1.jar")
+    os.system("echo dongshen")
+    os.system("cp {code_file} test.mx && java Compiler<test.mx>test.ll".format(code_file=code_file))
 
-    #  find ./src -name "*.java" -print0|xargs -0 javac -d runContain -cp ./antlr4-runtime-4.10.1.jar
-    os.system("ls")
-    os.system(" find ./src -name \"*.java\" -print0|xargs -0 javac -d runContain -cp ./antlr4-runtime-4.10.1.jar")
-    os.system("cp {code_file} test.mx && java Compiler<test.mx>test.ll &&cd ../debug".format(code_file=code_file))
-    os.system("cp ./src/test.ll test.ll && ./test-llvm-ir.sh<{input_file}>{output_file}".format(input_file=input_file,output_file=output_file))
+    os.system("cp ../src/test.ll test.ll && ./test-llvm-ir.sh<{input_file}>{output_file}".format(input_file=input_file,output_file=output_file))
 
 
     wrap = os.popen(
