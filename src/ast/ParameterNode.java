@@ -8,6 +8,7 @@ public class ParameterNode extends ASTNode{
     public String type;
     public int dim;
     public DeclarationNode declare;
+    public String ir_name;
 
     public ParameterNode(Position pos,String type, int dim, DeclarationNode decl)
     {

@@ -31,17 +31,11 @@ public class IRBuilder extends ASTVisitor {
     public int new_alternative_count;
     public int new_loop_count;
     public HashMap<String, Integer> variable_name_to_count;
-    public HashMap<String, Integer> function_name_to_count;
 
     public IRBuilder(Symbols symbols) {
         this.symbols = symbols;     
         llvm = new LLVM(symbols);
-        //增加一个处理global
-        SuiteNode func_body = new SuiteNode(new Position(0,0));
-        FunctionDefNode init_global_func = new FunctionDefNode("void",0,"kunkun_initialize_global_declarations",func_body,null,new Position(0,0));
-        FunctionIR init_global = new FunctionIR(init_global_func);
-        init_global.IR_name = "kunkun_initialize_global_declarations";
-        llvm.functions.put("kunkun_initialize_global_declarations",init_global);
+        llvm.functions = symbols.ir_function_names;
         getter = new IRTypeGetter(symbols,llvm);
         short_cut_count = 0;
         if_statement_count = 0;
@@ -57,7 +51,6 @@ public class IRBuilder extends ASTVisitor {
         this.current_scope = new Scope(null);
         global_scope = this.current_scope;
         variable_name_to_count = new HashMap<>();
-        function_name_to_count = new HashMap<>();
     }
 
     public FunctionIR current_function;//用来记下现在正在处理的函数，以便于给这个函数加block
@@ -131,8 +124,7 @@ public class IRBuilder extends ASTVisitor {
             //System.out.println(type);
             AllocaInstruction alloc = new AllocaInstruction(reg_name.toString(), getter.getType(it.type,it.dim,null));
             current_block.addInstruction(alloc);
-            if(it.init.get_reg!=null && it.init.get_reg.equals("kunkun_not_malloc")){}
-            else if (it.init.get_value) {
+            if (it.init.get_value) {
                 ValueUnit unit = it.init.valueIR.values.get(0);
                 StoreInstruction store;
                 if(it.type.equals("string")) {
@@ -162,17 +154,24 @@ public class IRBuilder extends ASTVisitor {
             //System.out.println(it.belong.name);
             DeclarationNode declaration = new DeclarationNode("this",null,it.pos);
             declaration.type = it.belong.name;
-            declaration.dim = 1;
-            ParameterNode self = new ParameterNode(it.pos,it.belong.name,1,declaration);
+            declaration.dim = 0;
+            ParameterNode self = new ParameterNode(it.pos,it.belong.name,0,declaration);
             it.parameterlist.add(0,self);
         }
         current_scope.function_paras_defined = true;
         current_function = new FunctionIR(it);
-        if(function_name_to_count.containsKey(it.name))function_name_to_count.replace(it.name,function_name_to_count.get(it.name)+1);
-        else function_name_to_count.put(it.name,0);
-        String funcname = it.name + (function_name_to_count.get(it.name)==0?"":String.valueOf(function_name_to_count.get(it.name)));
+        String funcname = it.name;
+        int reload = symbols.function_name_to_count.get(it.name);
+        for(int i = 0;i<=reload;++i){
+            String name = it.name+(i==0?"":String.valueOf(i));
+            ClassDefNode cls1 = it.belong;
+            ClassDefNode cls2 = llvm.functions.get(name).funcdef.belong;
+            if((cls1==null&&cls2==null)||(cls1 != null && cls1.equals(cls2))){
+                funcname=name;
+                break;
+            }
+        }
         current_function.IR_name = funcname;
-        llvm.functions.put(funcname,current_function);
         current_block = new BlockIR("entry");
         if(!current_function.funcdef.returntype.equals("void")){
             AllocaInstruction alloca_ret = new AllocaInstruction("%retval", getter.getType(it.returntype,it.returndim,null));
@@ -181,9 +180,6 @@ public class IRBuilder extends ASTVisitor {
                 ValueUnit unit = new ValueUnit(0,null,false);
                 StoreInstruction store_val = new StoreInstruction(unit,getter.getType(current_function.funcdef.returntype,current_function.funcdef.returndim,null),"%retval");
                 current_block.addInstruction(store_val);
-            }else {
-                StoreInstruction store_null = new StoreInstruction("null",getter.getType(it.returntype,it.returndim,null),"%retval",getter.getType(it.returntype,it.returndim,null));
-                current_block.addInstruction(store_null);
             }
         }
         it.parameterlist.forEach(a -> {
@@ -218,9 +214,16 @@ public class IRBuilder extends ASTVisitor {
             CallInstruction call_init_global = new CallInstruction("void","kunkun_initialize_global_declarations",0);
             current_block.addInstruction(call_init_global);
         }
+
         it.stmts.accept(this);//访问每一个具体的语句，把它翻译成llvm
         //System.out.print("function statement end ");
         //System.out.println(current_block.block_id);
+        if(it.is_constructor && !it.has_return_statement){//如果说是构造函数且没有返回值，那么需要先把this存到retval
+            LoadInstruction load_this = new LoadInstruction(current_function.reg_count++,"%this.addr", getter.getType(it.returntype,it.returndim,null));
+            StoreInstruction store_this = new StoreInstruction("%"+String.valueOf(load_this.reg),getter.getType(it.returntype,it.returndim,null),"%retval",getter.getType(it.returntype,it.returndim,null));
+            current_block.addInstruction(load_this);
+            current_block.addInstruction(store_this);
+        }
         BrInstruction br_exit = new BrInstruction(null,"exit",null);
         current_block.addInstruction(br_exit);
         current_function.blocks.add(current_block);
@@ -237,7 +240,7 @@ public class IRBuilder extends ASTVisitor {
         current_function.blocks.add(current_block);
         current_scope = current_scope.parent;
         current_block = null;
-        llvm.functions.put(funcname, current_function);//收集函数定义
+        llvm.functions.replace(funcname, current_function);//替换函数定义
         current_function = null;
     }
 
@@ -339,8 +342,8 @@ public class IRBuilder extends ASTVisitor {
     @Override
     public void visit(CallExpressionNode it) {
         String IR_name = it.func.name;
-        if(function_name_to_count.get(it.func.name)!=null){
-            int reload = function_name_to_count.get(it.func.name);
+        if(symbols.function_name_to_count.get(it.func.name)!=null){
+            int reload = symbols.function_name_to_count.get(it.func.name);
             for(int i = 0;i<=reload;++i){
                 String name = it.func.name+(i==0?"":String.valueOf(i));
                 ClassDefNode cls1 = it.func.belong;
@@ -356,6 +359,9 @@ public class IRBuilder extends ASTVisitor {
         //System.out.println(it.object);
         it.object.dot_function = it.func;
         it.object.accept(this);
+        //System.out.println(it.object.get_reg);
+        System.out.println("====================");
+        it.object.struct_name.forEach(System.out::println);
         StringBuilder self = null;
         int call_reg;
         if (it.func.returntype.equals("void")) call_reg = 0;
@@ -374,7 +380,8 @@ public class IRBuilder extends ASTVisitor {
                 ((MemberCallExpressionNode) it.object).object.accept(this);
             }
             call.para.add("i8* "+((MemberCallExpressionNode)it.object).object.get_reg);
-        }else if(it.object.getClass().toString().equals("class ast.MemberCallExpressionNode")&&((MemberCallExpressionNode)it.object).object.dim>0 && IR_name.equals("size")){
+        }
+        else if(it.object.getClass().toString().equals("class ast.MemberCallExpressionNode")&&((MemberCallExpressionNode)it.object).object.dim>0 && IR_name.equals("size")){
             //System.out.println(it.func.name);
             ((MemberCallExpressionNode) it.object).object.dot_function = null;
             ((MemberCallExpressionNode) it.object).object.accept(this);
@@ -386,31 +393,35 @@ public class IRBuilder extends ASTVisitor {
             current_block.addInstruction(bitcast);
             call.para.add("i8* "+bitcast.res_toString());
             call.func_name = "getArraySize";
-        }else if(!it.object.struct_name.isEmpty()||!it.name_index_in_class.isEmpty()){
-                String last_reg = it.object.get_reg;
-                if(it.object.struct_name.size()>=2){
-                    StringBuilder next_reg_first = new StringBuilder();
-                    next_reg_first.append("%").append(current_function.reg_count++);
-                    GetElementPtrInstruction gep_first = new GetElementPtrInstruction(it.object.struct_name.get(0),next_reg_first.toString(),last_reg,it.object.name_index_in_class.get(0));
-                    current_block.addInstruction(gep_first);
-                    last_reg = next_reg_first.toString();
-                    for(int i = 1;i<it.object.struct_name.size()-1;++i){
-                        StringBuilder next_reg = new StringBuilder();
-                        next_reg.append("%").append(current_function.reg_count++);
-                        GetElementPtrInstruction gep = new GetElementPtrInstruction(it.object.struct_name.get(i),next_reg.toString(),last_reg,it.object.name_index_in_class.get(i));
-                        current_block.addInstruction(gep);
-                        last_reg = next_reg.toString();
-                        //System.out.println(it.object.name_index_in_class.get(i));
-                        //System.out.println(it.object.struct_name.get(i));
-                    }
-                }
-                self = new StringBuilder();
-                self.append("%struct.").append(it.object.struct_name.get(it.object.struct_name.size()-1)).append("* ");
-                self.append(last_reg);
-                //System.out.println(self.toString());
-        }else if(it.func.belong != null){
+        }
+        else if(!it.object.struct_name.isEmpty()||!it.name_index_in_class.isEmpty()){
+            String last_reg = it.object.get_reg;
+            for(int i = 0;i<it.object.struct_name.size()-1;++i){
+                LoadInstruction load_struct2 = new LoadInstruction(current_function.reg_count++,last_reg, getter.getType(it.object.struct_name.get(i),0,null));
+                current_block.addInstruction(load_struct2);
+                StringBuilder gep_reg = new StringBuilder();
+                gep_reg.append("%").append(current_function.reg_count++);
+                GetElementPtrInstruction gep = new GetElementPtrInstruction(it.object.struct_name.get(i),gep_reg.toString(),"%"+String.valueOf(load_struct2.reg),it.object.name_index_in_class.get(i));
+                current_block.addInstruction(gep);
+                last_reg = gep.res_toString();
+                //System.out.println(it.object.name_index_in_class.get(i));
+                //System.out.println(it.object.struct_name.get(i));
+            }
+            LoadInstruction load_struct = new LoadInstruction(current_function.reg_count++,last_reg,getter.getType(it.object.struct_name.get(it.object.struct_name.size()-1),0,null));
+            last_reg = "%"+String.valueOf(load_struct.reg);
+            current_block.addInstruction(load_struct);
             self = new StringBuilder();
-            self.append("%struct.").append(it.func.belong.name).append("* %this");
+            self.append(getter.getType(it.object.struct_name.get(it.object.struct_name.size()-1),0,null)).append(" ");
+            self.append(last_reg);
+            //System.out.println(self.toString());
+        }else if(it.func.belong != null){
+            if(it.object.getClass().toString().equals("class ast.PrimaryExpressionNode")){
+                self = new StringBuilder();
+                self.append(getter.getType(it.func.belong.name,0,null)).append(" %this");
+            } else {
+                self = new StringBuilder();
+                self.append(getter.getType(it.func.belong.name,0,null)).append(" ").append(it.object.get_reg);
+            }
         }
         if(self!=null)call.class_belong_info = self.toString();
         it.auguments.forEach(a -> {
@@ -539,7 +550,9 @@ public class IRBuilder extends ASTVisitor {
 
     @Override
     public void visit(PrimaryExpressionNode it) {
-        if(it.dot_function!=null)return;
+        if(it.dot_function!=null){
+            return;
+        }
         if (it.exprtype == PrimaryExpressionNode.ExpressionType.identifierExpr) {
             Scope destination = current_scope.findScopeContaining(it.primaryExpression);
             String reg_name = destination.variable_name_to_reg_name.get(it.primaryExpression);//本身含有% @
@@ -560,10 +573,10 @@ public class IRBuilder extends ASTVisitor {
                 tmp.append(current_function.reg_count - 1);
                 //tmp.append("IDENTIFIER");
                 it.get_reg = "%"+tmp.toString();
-                  last_identifier_expression_reg = (current_function.para_names.contains(it.primaryExpression) ? ("%"+it.primaryExpression + ".addr") : reg_name.toString());
+                last_identifier_expression_reg = (current_function.para_names.contains(it.primaryExpression) ? ("%"+it.primaryExpression + ".addr") : reg_name.toString());
             } else {
                 if(it.primaryExpression.equals("this")){
-                    LoadInstruction load_from_this = new LoadInstruction(current_function.reg_count++, "%this.addr",getter.getType(it.type,it.dim,null)+"*");
+                    LoadInstruction load_from_this = new LoadInstruction(current_function.reg_count++, "%this.addr",getter.getType(it.type,it.dim,null));
                     current_block.addInstruction(load_from_this);
                     it.get_reg = "%"+String.valueOf(load_from_this.reg);
                     last_identifier_expression_reg = "%this.addr";
@@ -927,7 +940,7 @@ public class IRBuilder extends ASTVisitor {
         it.lhs.accept(this);
         it.lhs.visited_as_lhs = false;
         it.rhs.accept(this);
-        if(it.rhs.get_reg!=null && it.rhs.get_reg.equals("kunkun_not_malloc")){}else if (it.rhs.get_value) {
+        if (it.rhs.get_value) {
             //System.out.println("Store the value");
             StoreInstruction store = new StoreInstruction(it.rhs.valueIR.values.get(0), getter.getType(it.rhs.type,it.rhs.dim,it.rhs.get_reg),it.lhs.get_reg);
             current_block.addInstruction(store);
@@ -984,7 +997,7 @@ public class IRBuilder extends ASTVisitor {
             int index = object_class.element_names.indexOf(it.id);
             //System.out.println(index);
             // if(it.object.getClass().toString().equals("class ast.PrimaryExpressionNode")&&((PrimaryExpressionNode)it.object).primaryExpression.equals("this"))it.visited_as_lhs = false;
-            it.object.visited_as_lhs = true;
+            // it.object.visited_as_lhs = it.visited_as_lhs;
             it.object.dot_function = null;
             it.object.accept(this);
             it.object.visited_as_lhs = false;
@@ -1008,17 +1021,20 @@ public class IRBuilder extends ASTVisitor {
     public void visit(PrefixExpressionNode it){
         if(it.op.equals("++")){
             it.object.accept(this);
-            //todo
             BinaryInstruction add = new BinaryInstruction("+", (it.object.get_value? String.valueOf(it.object.valueIR.values.get(0).number_value) : it.object.get_reg), "1", getter.getType(it.object.type,it.object.dim,it.object.get_reg), binary_expression_count++);
             current_block.addInstruction(add);
-            StoreInstruction store = new StoreInstruction(add.res_toString(),getter.getType(it.object.type,it.object.dim,null),  last_identifier_expression_reg,getter.getType(it.object.type,it.object.dim,null));
+            it.object.visited_as_lhs = true;
+            it.object.accept(this);
+            StoreInstruction store = new StoreInstruction(add.res_toString(),getter.getType(it.object.type,it.object.dim,null),  it.object.get_reg,getter.getType(it.object.type,it.object.dim,null));
             current_block.addInstruction(store);
             it.get_reg = add.res_toString();
         } else if(it.op.equals("--")) {
             it.object.accept(this);
             BinaryInstruction sub = new BinaryInstruction("-", (it.object.get_value? String.valueOf(it.object.valueIR.values.get(0).number_value) :it.object.get_reg), "1", getter.getType(it.object.type,it.object.dim,it.object.get_reg), binary_expression_count++);
             current_block.addInstruction(sub);
-            StoreInstruction store = new StoreInstruction(sub.res_toString(), getter.getType(it.object.type,it.object.dim,null),   last_identifier_expression_reg,getter.getType(it.object.type,it.object.dim,null));
+            it.object.visited_as_lhs = true;
+            it.object.accept(this);
+            StoreInstruction store = new StoreInstruction(sub.res_toString(),getter.getType(it.object.type,it.object.dim,null),  it.object.get_reg,getter.getType(it.object.type,it.object.dim,null));
             current_block.addInstruction(store);
             it.get_reg = sub.res_toString();
         }else if (it.op.equals("~")){
@@ -1055,7 +1071,9 @@ public class IRBuilder extends ASTVisitor {
             }
             BinaryInstruction add = new BinaryInstruction("+", (it.object.get_value? String.valueOf(it.object.valueIR.values.get(0).number_value) :it.object.get_reg), "1", getter.getType(it.object.type,it.object.dim,it.object.get_reg),binary_expression_count++);
             current_block.addInstruction(add);
-            StoreInstruction store = new StoreInstruction(add.res_toString(), getter.getType(it.object.type,it.object.dim,null),   last_identifier_expression_reg,getter.getType(it.object.type,it.object.dim,null));
+            it.object.visited_as_lhs = true;
+            it.object.accept(this);
+            StoreInstruction store = new StoreInstruction(add.res_toString(),getter.getType(it.object.type,it.object.dim,null),  it.object.get_reg,getter.getType(it.object.type,it.object.dim,null));
             current_block.addInstruction(store);
         } else if(it.op.equals("--")) {
             it.object.accept(this);
@@ -1066,7 +1084,9 @@ public class IRBuilder extends ASTVisitor {
             }
             BinaryInstruction sub = new BinaryInstruction("-", (it.object.get_value? String.valueOf(it.object.valueIR.values.get(0).number_value) :it.object.get_reg), "1", getter.getType(it.object.type,it.object.dim,it.object.get_reg), binary_expression_count++);
             current_block.addInstruction(sub);
-            StoreInstruction store = new StoreInstruction(sub.res_toString(), getter.getType(it.object.type,it.object.dim,null),   last_identifier_expression_reg,getter.getType(it.object.type,it.object.dim,null));
+            it.object.visited_as_lhs = true;
+            it.object.accept(this);
+            StoreInstruction store = new StoreInstruction(sub.res_toString(),getter.getType(it.object.type,it.object.dim,null),  it.object.get_reg,getter.getType(it.object.type,it.object.dim,null));
             current_block.addInstruction(store);
         }
     }
@@ -1175,7 +1195,18 @@ public class IRBuilder extends ASTVisitor {
                 array.accept(this);
                 it.get_reg = array.get_reg;
             }else {
-                it.get_reg = "kunkun_not_malloc";
+                CallInstruction call = new CallInstruction("i8*", "malloc_", call_statement_count++);
+                StringBuilder para_size = new StringBuilder();
+                StringBuilder para_length = new StringBuilder();
+                para_size.append( "i32 0");
+                para_length.append( "i32 ").append(String.valueOf(getter.getSize(it.type,it.dim)).toString());
+                call.para.add(para_size.toString());
+                call.para.add(para_length.toString());
+                //System.out.println(para_length);
+                BitcastInstruction bitcast = new BitcastInstruction("i8*",getter.getType(it.type,it.dim,null),call.res_toString(),current_function.reg_count++);
+                current_block.addInstruction(call);
+                current_block.addInstruction(bitcast);
+                it.get_reg = bitcast.res_toString();
             }
 
 //        } else {//并且mx的所有数组都是先alloca一个指针,这种写法不能适应mx的可变长数组，比如一个二维数组int[3][]，我的三个一维数组的维度是可以不相同的。

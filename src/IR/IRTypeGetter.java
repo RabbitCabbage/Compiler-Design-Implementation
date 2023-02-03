@@ -1,8 +1,9 @@
 package IR;
 
 import ast.ClassDefNode;
-import ast.DeclarationNode;
 import frontend.Symbols;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class IRTypeGetter {
     Symbols symbols;
@@ -23,7 +24,10 @@ public class IRTypeGetter {
             }else type.append("i8*");
         }
         else if(typename.equals("bool"))type.append("i1");
-        else type.append("%struct."+typename);
+        else {
+            type.append("%struct."+typename);
+            dim++;
+        }
         for(int i=0;i<dim;++i){
             type.append("*");
         }
@@ -36,12 +40,17 @@ public class IRTypeGetter {
         return gep.toString();
     }
     public int getSize(String typename,int dim) {
-        if(dim >= 1) return 8;
+        if(dim >= 1) return 4;
         if(typename.equals("int")||typename.equals("i32"))return 4;
+        if(typename.equals("bool")||typename.equals("i1"))return 4;
         if(typename.equals("void"))return 0;
         else {
             ClassDefNode cls = symbols.classTypes.get(typename);
-            return cls.variablemap.size()*8;
+            AtomicInteger size = new AtomicInteger();
+            cls.vardefs.forEach(a-> {
+                size.addAndGet(getSize(a.typename, a.dim));
+            });
+            return size.get();
         }
     }
 }

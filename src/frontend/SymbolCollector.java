@@ -1,5 +1,6 @@
 package frontend;
 
+import IR.FunctionIR;
 import ast.*;
 import util.Position;
 import util.error.SemanticError;
@@ -8,6 +9,7 @@ public class SymbolCollector extends ASTVisitor {
 
     public Symbols symbols;
     public ClassDefNode currentClass = null;//正在处理的类定义
+    public boolean ir_not_collect = false;
 
     public SymbolCollector(Symbols symbols) {
         this.symbols = symbols;
@@ -25,6 +27,7 @@ public class SymbolCollector extends ASTVisitor {
         ClassDefNode String = new ClassDefNode(new Position(0, 0), "string");
         currentClass = String;
 
+        ir_not_collect = true;//这几个定义ir就不用collect了
         FunctionDefNode length = new FunctionDefNode("int", 0, "length", null, String, new Position(0, 0));
 
         ParameterNode left = new ParameterNode(new Position(0, 0), "int", 0, new DeclarationNode("left", null, new Position(0, 0)));
@@ -83,6 +86,7 @@ public class SymbolCollector extends ASTVisitor {
 
         FunctionDefNode size = new FunctionDefNode("int", 0, "size", null, null, new Position(0, 0));
         size.accept(this);
+        ir_not_collect = false;
     }
 
     @Override
@@ -133,6 +137,15 @@ public class SymbolCollector extends ASTVisitor {
                     it.returntype = currentClass.name;
             }
             currentClass.methodmap.put(it.name, it);
+        }
+        if(!ir_not_collect){
+            // 记下调用的时候要用到的编号
+            if(symbols.function_name_to_count.containsKey(it.name))symbols.function_name_to_count.replace(it.name,symbols.function_name_to_count.get(it.name)+1);
+            else symbols.function_name_to_count.put(it.name,0);
+            String funcname = it.name + (symbols.function_name_to_count.get(it.name)==0?"":String.valueOf(symbols.function_name_to_count.get(it.name)));
+            FunctionIR current_function = new FunctionIR(it);
+            current_function.IR_name= funcname;
+            symbols.ir_function_names.put(funcname,current_function);
         }
     }
 }

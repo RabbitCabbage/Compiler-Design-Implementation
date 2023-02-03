@@ -6,17 +6,6 @@
 kunkun_initialize_global_declarations:  # @kunkun_initialize_global_declarations
 	.cfi_startproc
 # %bb.0:                                # %entry
-	addi	sp, sp, -16
-	.cfi_def_cfa_offset 16
-	sw	ra, 12(sp)
-	.cfi_offset ra, -4
-	addi	a0, zero, 9
-	addi	a1, zero, 72
-	call	malloc_
-	lui	a1, %hi(b)
-	sw	a0, %lo(b)(a1)
-	lw	ra, 12(sp)
-	addi	sp, sp, 16
 	ret
 .Lfunc_end0:
 	.size	kunkun_initialize_global_declarations, .Lfunc_end0-kunkun_initialize_global_declarations
@@ -34,11 +23,19 @@ main:                                   # @main
 	.cfi_offset ra, -4
 	sw	zero, 8(sp)
 	call	kunkun_initialize_global_declarations
-	lui	a0, %hi(b)
-	lw	a0, %lo(b)(a0)
-	call	getArraySize
+	addi	a1, zero, 8
+	mv	a0, zero
+	call	malloc_
+	sw	a0, 4(sp)
+	lw	a0, 4(a0)
+	addi	a1, zero, 99
+	sw	a1, 0(a0)
+	lw	a0, 4(sp)
+	lw	a0, 4(a0)
+	lw	a0, 0(a0)
 	call	printInt
-	lw	a0, 8(sp)
+	sw	zero, 8(sp)
+	mv	a0, zero
 	lw	ra, 12(sp)
 	addi	sp, sp, 16
 	ret
@@ -46,12 +43,31 @@ main:                                   # @main
 	.size	main, .Lfunc_end1-main
 	.cfi_endproc
                                         # -- End function
-	.type	b,@object               # @b
-	.section	.sbss,"aw",@nobits
-	.globl	b
+	.globl	init                    # -- Begin function init
 	.p2align	2
-b:
-	.word	0
-	.size	b, 4
+	.type	init,@function
+init:                                   # @init
+	.cfi_startproc
+# %bb.0:                                # %entry
+	addi	sp, sp, -16
+	.cfi_def_cfa_offset 16
+	sw	ra, 12(sp)
+	.cfi_offset ra, -4
+	sw	a0, 8(sp)
+	lui	a0, %hi(.L.str0)
+	addi	a0, a0, %lo(.L.str0)
+	call	print
+	lw	ra, 12(sp)
+	addi	sp, sp, 16
+	ret
+.Lfunc_end2:
+	.size	init, .Lfunc_end2-init
+	.cfi_endproc
+                                        # -- End function
+	.type	.L.str0,@object         # @.str0
+	.section	.rodata.str1.1,"aMS",@progbits,1
+.L.str0:
+	.asciz	"init"
+	.size	.L.str0, 5
 
 	.section	".note.GNU-stack","",@progbits

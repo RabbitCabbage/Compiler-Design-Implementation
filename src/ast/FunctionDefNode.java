@@ -12,6 +12,7 @@ public class FunctionDefNode extends ASTNode{
     public int returndim;
     public boolean is_constructor = false;
 
+    public boolean has_return_statement = false;
     public boolean has_been_returned = false;
     public boolean is_lambda = false;
 

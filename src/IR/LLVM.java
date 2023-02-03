@@ -56,8 +56,8 @@ public class LLVM {
 //            for(FunctionIR fcdef: clsdef.methods){
 //                text.append("define ").append(getter.getType(fcdef.funcdef.returntype,fcdef.funcdef.returndim,null)).append(" @").append(fcdef.funcdef.name).append("(");
 //                int count = 0;
-//                System.out.println(fcdef.para_names.size());
-//                System.out.println(fcdef.funcdef.parameterlist.size());
+//                //System.out.println(fcdef.para_names.size());
+//                //System.out.println(fcdef.funcdef.parameterlist.size());
 //                for(ParameterNode para: fcdef.funcdef.parameterlist){
 //                    text.append(getter.getType(para.type,para.dim,null)).append(" ").append(fcdef.para_names.get(count));
 //                    count = count + 1;
@@ -82,6 +82,10 @@ public class LLVM {
         text.append("\n");
         //System.out.println(text.toString());
         for(var fcdef: functions.values()){
+            //System.out.println(fcdef.IR_name);
+            if(fcdef.funcdef.belong!=null)System.out.println(fcdef.funcdef.belong.name);
+            //System.out.println(fcdef.para_names.size());
+            //System.out.println(fcdef.funcdef.parameterlist.size());
             text.append("define ").append(getter.getType(fcdef.funcdef.returntype,fcdef.funcdef.returndim,null)).append(" @").append(fcdef.IR_name).append("(");
             int count = 0;
             for(ParameterNode para: fcdef.funcdef.parameterlist){
