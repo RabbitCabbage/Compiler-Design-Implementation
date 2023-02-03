@@ -1,14 +1,18 @@
 	.text
 	.file	"IR.ll"
-	.globl	kunkun_initialize_global_declarations # -- Begin function kunkun_initialize_global_declarations
+	.globl	kunkun                  # -- Begin function kunkun
 	.p2align	2
-	.type	kunkun_initialize_global_declarations,@function
-kunkun_initialize_global_declarations:  # @kunkun_initialize_global_declarations
+	.type	kunkun,@function
+kunkun:                                 # @kunkun
 	.cfi_startproc
 # %bb.0:                                # %entry
+	lui	a0, %hi(.L.str0)
+	addi	a0, a0, %lo(.L.str0)
+	lui	a1, %hi(hello)
+	sw	a0, %lo(hello)(a1)
 	ret
 .Lfunc_end0:
-	.size	kunkun_initialize_global_declarations, .Lfunc_end0-kunkun_initialize_global_declarations
+	.size	kunkun, .Lfunc_end0-kunkun
 	.cfi_endproc
                                         # -- End function
 	.globl	main                    # -- Begin function main
@@ -19,47 +23,50 @@ main:                                   # @main
 # %bb.0:                                # %entry
 	addi	sp, sp, -16
 	.cfi_def_cfa_offset 16
-	sw	ra, 12(sp)
-	.cfi_offset ra, -4
-	sw	zero, 8(sp)
-	call	kunkun_initialize_global_declarations
-	addi	a1, zero, 8
-	mv	a0, zero
-	call	malloc_
-	sw	a0, 4(sp)
-	mv	a0, zero
-	lw	ra, 12(sp)
+	addi	a0, zero, 100
+	sw	a0, 8(sp)
+	sw	zero, 12(sp)
+	lw	a0, 12(sp)
 	addi	sp, sp, 16
 	ret
 .Lfunc_end1:
 	.size	main, .Lfunc_end1-main
 	.cfi_endproc
                                         # -- End function
-	.globl	init                    # -- Begin function init
+	.globl	nothing                 # -- Begin function nothing
 	.p2align	2
-	.type	init,@function
-init:                                   # @init
+	.type	nothing,@function
+nothing:                                # @nothing
 	.cfi_startproc
 # %bb.0:                                # %entry
 	addi	sp, sp, -16
 	.cfi_def_cfa_offset 16
-	sw	ra, 12(sp)
-	.cfi_offset ra, -4
-	sw	a0, 8(sp)
-	lui	a0, %hi(.L.str0)
-	addi	a0, a0, %lo(.L.str0)
-	call	print
-	lw	ra, 12(sp)
+	sw	a0, 12(sp)
 	addi	sp, sp, 16
 	ret
 .Lfunc_end2:
-	.size	init, .Lfunc_end2-init
+	.size	nothing, .Lfunc_end2-nothing
 	.cfi_endproc
                                         # -- End function
 	.type	.L.str0,@object         # @.str0
 	.section	.rodata.str1.1,"aMS",@progbits,1
 .L.str0:
-	.asciz	"init"
-	.size	.L.str0, 5
+	.asciz	"hl"
+	.size	.L.str0, 3
+
+	.type	a,@object               # @a
+	.section	.sbss,"aw",@nobits
+	.globl	a
+	.p2align	2
+a:
+	.word	0                       # 0x0
+	.size	a, 4
+
+	.type	hello,@object           # @hello
+	.globl	hello
+	.p2align	2
+hello:
+	.word	0
+	.size	hello, 4
 
 	.section	".note.GNU-stack","",@progbits

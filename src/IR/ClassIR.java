@@ -1,5 +1,6 @@
 package IR;
 
+import asm.ASMBuilder;
 import ast.ClassDefNode;
 import ast.DeclarationNode;
 
@@ -16,5 +17,8 @@ public class ClassIR {
         methods = new ArrayList<>();
         element_names = new ArrayList<>();
         elements = new ArrayList<>();
+    }
+    public void accept(ASMBuilder builder){
+        builder.visit(this);
     }
 }

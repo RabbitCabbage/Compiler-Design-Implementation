@@ -100,10 +100,20 @@ public class LLVM {
             text.append("){\n");
             if(fcdef.funcdef.stmts != null){
                 //先把所有的statment收集到StatementIR里面
+                StringBuilder alloca =  new StringBuilder();
+                fcdef.blocks.forEach(a->{
+                    //System.out.println("new block");
+                    a.instrs.forEach(b->{
+                        if(b.getClass().toString().equals("class IR.Instruction.AllocaInstruction"))alloca.append(b.toString());
+                    });
+                });
                 fcdef.blocks.forEach(a->{
                     //System.out.println("new block");
                     text.append(a.block_id).append(":\n");
-                    a.instrs.forEach(b->text.append(b.toString()));
+                    if(a.block_id.toString().equals("entry"))text.append(alloca);
+                    a.instrs.forEach(b->{
+                        if(!b.getClass().toString().equals("class IR.Instruction.AllocaInstruction"))text.append(b.toString());
+                    });
                 });
             }
             text.append("}\n");

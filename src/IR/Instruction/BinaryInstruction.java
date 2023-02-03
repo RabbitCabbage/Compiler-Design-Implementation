@@ -1,5 +1,6 @@
 package IR.Instruction;
 
+import asm.ASMBuilder;
 import ast.BinaryExpressionNode;
 
 public class BinaryInstruction extends InstructionIR{
@@ -52,5 +53,9 @@ public class BinaryInstruction extends InstructionIR{
         else if(opcode.equals(">"))binary.append("\t%").append("cmp").append(result_reg).append(" = ").append("icmp sgt ").append(type).append(" ").append(lhs_reg).append(", ").append(rhs_reg).append("\n");
         else if(opcode.equals(">="))binary.append("\t%").append("cmp").append(result_reg).append(" = ").append("icmp sge ").append(type).append(" ").append(lhs_reg).append(", ").append(rhs_reg).append("\n");
         return binary.toString();
+    }
+    @Override
+    public void accept(ASMBuilder builder){
+        builder.visit(this);
     }
 }

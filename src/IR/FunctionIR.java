@@ -1,5 +1,6 @@
 package IR;
 
+import asm.ASMBuilder;
 import ast.FunctionDefNode;
 
 import java.util.ArrayList;
@@ -14,5 +15,8 @@ public class FunctionIR {
         funcdef = fc;
         blocks = new ArrayList<>();
         para_names = new ArrayList<>();
+    }
+    public void accept(ASMBuilder builder){
+        builder.visit(this);
     }
 }

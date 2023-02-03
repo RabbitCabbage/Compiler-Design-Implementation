@@ -23,10 +23,10 @@ public class Symbols {
         ir_function_names = new LinkedHashMap<>();
         //增加一个处理global
         SuiteNode func_body = new SuiteNode(new Position(0,0));
-        FunctionDefNode init_global_func = new FunctionDefNode("void",0,"kunkun_initialize_global_declarations",func_body,null,new Position(0,0));
+        FunctionDefNode init_global_func = new FunctionDefNode("void",0,"kunkun",func_body,null,new Position(0,0));
         FunctionIR init_global = new FunctionIR(init_global_func);
-        init_global.IR_name = "kunkun_initialize_global_declarations";
-        ir_function_names.put("kunkun_initialize_global_declarations",init_global);
+        init_global.IR_name = "kunkun";
+        ir_function_names.put("kunkun",init_global);
 
     }
 

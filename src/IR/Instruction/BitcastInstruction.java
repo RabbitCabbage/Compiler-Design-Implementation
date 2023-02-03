@@ -1,5 +1,7 @@
 package IR.Instruction;
 
+import asm.ASMBuilder;
+
 public class BitcastInstruction extends InstructionIR{
     public String from_type;
     public String to_type;
@@ -22,5 +24,10 @@ public class BitcastInstruction extends InstructionIR{
         res_reg.append("%");
         res_reg.append(result_reg);
         return res_reg.toString();
+    }
+
+    @Override
+    public void accept(ASMBuilder builder){
+        builder.visit(this);
     }
 }

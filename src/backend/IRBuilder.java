@@ -61,13 +61,13 @@ public class IRBuilder extends ASTVisitor {
         it.classdefs.forEach(a -> a.accept(this));
         it.vardefs.forEach(a -> a.accept(this));
         it.funcdefs.forEach(a -> a.accept(this));
-        //System.out.println(llvm.functions.get("kunkun_initialize_global_declarations"));
-        if(llvm.functions.get("kunkun_initialize_global_declarations").blocks.isEmpty()){
+        //System.out.println(llvm.functions.get("kunkun"));
+        if(llvm.functions.get("kunkun").blocks.isEmpty()){
             BlockIR entry = new BlockIR("entry");
             entry.addInstruction(new RetInstruction(null,null,true));
-            llvm.functions.get("kunkun_initialize_global_declarations").blocks.add(entry);
+            llvm.functions.get("kunkun").blocks.add(entry);
         }
-        else  llvm.functions.get("kunkun_initialize_global_declarations").blocks.get(llvm.functions.get("kunkun_initialize_global_declarations").blocks.size()-1).addInstruction(new RetInstruction(null,null,true));
+        else  llvm.functions.get("kunkun").blocks.get(llvm.functions.get("kunkun").blocks.size()-1).addInstruction(new RetInstruction(null,null,true));
     }
 
     @Override
@@ -116,6 +116,7 @@ public class IRBuilder extends ASTVisitor {
             //System.out.println(it.type);
             global_info.append(" = dso_local global ").append(getter.getType(it.type,it.dim,null)).append((!it.type.equals("int")&&!it.type.equals("bool")&&!it.type.equals("string"))?" zeroinitializer \n":((it.dim == 0&&!it.type.equals("string"))?" 0\n":" null\n"));
             it.info_for_global = global_info.toString();
+            it.reg_name_for_global = reg_name.toString();
             return;
         }
         if (it.init != null) {
@@ -211,7 +212,7 @@ public class IRBuilder extends ASTVisitor {
             current_scope.defineVariable(a.declare.name,a.declare,a.declare.pos);
         });
         if(it.name.equals("main")){
-            CallInstruction call_init_global = new CallInstruction("void","kunkun_initialize_global_declarations",0);
+            CallInstruction call_init_global = new CallInstruction("void","kunkun",0);
             current_block.addInstruction(call_init_global);
         }
 
@@ -936,7 +937,7 @@ public class IRBuilder extends ASTVisitor {
     public void visit(AssignmentExpressionNode it) {
         boolean use_init_global = false;
         if(current_function == null){
-            current_function = llvm.functions.get("kunkun_initialize_global_declarations");
+            current_function = llvm.functions.get("kunkun");
             if(!current_function.blocks.isEmpty()){
                 current_block = current_function.blocks.get(current_function.blocks.size()-1);
                 current_function.blocks.remove(current_function.blocks.size()-1);

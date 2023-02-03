@@ -2,6 +2,7 @@ package IR.Instruction;
 
 import IR.Instruction.InstructionIR;
 import IR.ValueUnit;
+import asm.ASMBuilder;
 
 public class RetInstruction extends InstructionIR {
     String type;
@@ -30,5 +31,10 @@ public class RetInstruction extends InstructionIR {
             ret_.append("\tret "+type+" ").append((type.equals("i32")?value.number_value:(type.equals("string")?value.string_value:value.bool_value))+"\n");
             return ret_.toString();
         }
+    }
+
+    @Override
+    public void accept(ASMBuilder builder){
+        builder.visit(this);
     }
 }

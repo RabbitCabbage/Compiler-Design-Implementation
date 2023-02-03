@@ -1,3 +1,5 @@
+import asm.ASM;
+import asm.ASMBuilder;
 import ast.RootNode;
 import backend.IRBuilder;
 import frontend.ASTBuilder;
@@ -19,7 +21,8 @@ import util.error.SemanticError;
 public class Compiler {
     public static void main(String[] args) throws Exception {
 //        InputStream input = System.in;
-        InputStream input = new FileInputStream("./testcases/codegen/shortest_path/dijkstra.mx");
+//        InputStream input = new FileInputStream("./testcases/codegen/shortest_path/dijkstra.mx");
+        InputStream input = new FileInputStream("./testcases/basic.mx");
 //        InputStream input = new FileInputStream(args[0]);
         try {
             MxLexer lexer = new MxLexer(CharStreams.fromStream(input));
@@ -36,12 +39,20 @@ public class Compiler {
             new SemanticChecker(symbols).visit(programnode);
             IRBuilder ir = new IRBuilder(symbols);
             ir.visit(programnode);
-            File file = new File("IR.ll");
-            if(!file.exists())file.createNewFile();
-            FileWriter fw = new FileWriter("IR.ll");
-            PrintWriter pw = new PrintWriter(fw);
-            pw.print(ir.llvm.toDotLLVM());
-            pw.flush();
+            File file1 = new File("IR.ll");
+            if(!file1.exists())file1.createNewFile();
+            FileWriter fw1 = new FileWriter("IR.ll");
+            PrintWriter pw1 = new PrintWriter(fw1);
+            pw1.print(ir.llvm.toDotLLVM());
+            pw1.flush();
+            ASM asm = new ASM(new ASMBuilder());
+            asm.builder.visit(ir.llvm);
+            File file2 = new File("assembly.s");
+            if(!file2.exists())file2.createNewFile();
+            FileWriter fw2 = new FileWriter("assembly.s");
+            PrintWriter pw2 = new PrintWriter(fw2);
+            pw2.print(asm.printASM());
+            pw2.flush();
         } catch (Error error) {
             System.err.println(error.toString());
             throw new RuntimeException();

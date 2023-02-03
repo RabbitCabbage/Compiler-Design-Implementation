@@ -2,6 +2,7 @@ package IR.Instruction;
 
 import IR.Instruction.InstructionIR;
 import IR.ValueUnit;
+import asm.ASMBuilder;
 
 public class StoreInstruction extends InstructionIR {
     ValueUnit value;
@@ -37,5 +38,10 @@ public class StoreInstruction extends InstructionIR {
         }
         store.append("* ").append(to_reg_name).append("\n");
         return store.toString();
+    }
+
+    @Override
+    public void accept(ASMBuilder builder){
+        builder.visit(this);
     }
 }

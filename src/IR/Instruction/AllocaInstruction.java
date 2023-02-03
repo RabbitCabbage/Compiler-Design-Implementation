@@ -1,5 +1,7 @@
 package IR.Instruction;
 
+import asm.ASMBuilder;
+
 public class AllocaInstruction extends InstructionIR {
     String name;
     String type;
@@ -14,5 +16,9 @@ public class AllocaInstruction extends InstructionIR {
     }
     public String res_toString(){
         return name;
+    }
+    @Override
+    public void accept(ASMBuilder builder){
+        builder.visit(this);
     }
 }

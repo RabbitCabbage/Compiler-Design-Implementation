@@ -1,5 +1,7 @@
 package IR.Instruction;
 
+import asm.ASMBuilder;
+
 import java.util.ArrayList;
 
 public class GetElementPtrInstruction extends InstructionIR{
@@ -71,4 +73,8 @@ public class GetElementPtrInstruction extends InstructionIR{
         return gep_res.toString();
     }
 
+    @Override
+    public void accept(ASMBuilder builder){
+        builder.visit(this);
+    }
 }

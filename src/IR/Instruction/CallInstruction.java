@@ -1,5 +1,7 @@
 package IR.Instruction;
 
+import asm.ASMBuilder;
+
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -37,5 +39,10 @@ public class CallInstruction extends InstructionIR{
         StringBuilder call = new StringBuilder();
         call.append("%call").append(call_reg);
         return call.toString();
+    }
+
+    @Override
+    public void accept(ASMBuilder builder){
+        builder.visit(this);
     }
 }

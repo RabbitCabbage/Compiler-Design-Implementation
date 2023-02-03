@@ -1,5 +1,7 @@
 package IR.Instruction;
 
+import asm.ASMBuilder;
+
 public class PhiInstruction extends InstructionIR{
     public int result_reg;
     String block1;
@@ -23,5 +25,10 @@ public class PhiInstruction extends InstructionIR{
         StringBuilder phi = new StringBuilder();
         phi.append("\t%").append(result_reg).append(" = phi i1 [ ").append(result1).append(", %").append(block1).append(" ], [ ").append(result2).append(", %").append(block2).append("]\n");
         return phi.toString();
+    }
+
+    @Override
+    public void accept(ASMBuilder builder){
+        builder.visit(this);
     }
 }

@@ -1,5 +1,7 @@
 package IR.Instruction;
 
+import asm.ASMBuilder;
+
 public class BrInstruction extends InstructionIR {
     public String condition;
     public String label1;
@@ -20,5 +22,10 @@ public class BrInstruction extends InstructionIR {
             br.append("label %").append(label1).append("\n");
             return br.toString();
         }
+    }
+
+    @Override
+    public void accept(ASMBuilder builder){
+        builder.visit(this);
     }
 }

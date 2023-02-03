@@ -1,5 +1,7 @@
 package IR.Instruction;
 
+import asm.ASMBuilder;
+
 public class LoadInstruction extends InstructionIR{
     public int reg;
     public String from_reg_name;
@@ -15,5 +17,10 @@ public class LoadInstruction extends InstructionIR{
         StringBuilder load = new StringBuilder();
         load.append("\t%").append(reg).append(" = load ").append(type).append(", "+type+"* "+from_reg_name+"\n");
         return load.toString();
+    }
+
+    @Override
+    public void accept(ASMBuilder builder){
+        builder.visit(this);
     }
 }

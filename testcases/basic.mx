@@ -1,7 +1,12 @@
 int a;
 string hello = "hl";
+class edge{
+    int len;
+    void nothing(){
+        return ;
+    }
+};
 int main(){
-    int i = getInt();
-    printInt(i);
+    int a = 100;
     return 0;
 }
