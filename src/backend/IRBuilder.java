@@ -320,22 +320,25 @@ public class IRBuilder extends ASTVisitor {
         current_scope = new Scope(current_scope);
         it.thenstmt.accept(this);
         current_scope = current_scope.parent;
-        BrInstruction then_br = new BrInstruction(null, "if.end" + count.toString(), null);
-        current_block.addInstruction(then_br);
-        //System.out.print(current_block.block_id);
-        current_function.blocks.add(current_block);
+        if(current_block != null){
+            BrInstruction then_br = new BrInstruction(null, "if.end" + count.toString(), null);
+            current_block.addInstruction(then_br);
+            //System.out.print(current_block.block_id);
+            current_function.blocks.add(current_block);
+        }
 
         if (it.elsestmt != null) {
             current_block = else_block;
             current_scope = new Scope(current_scope);
             it.elsestmt.accept(this);
             current_scope = current_scope.parent;
-            BrInstruction else_br = new BrInstruction(null, "if.end" + count.toString(), null);
-            current_block.addInstruction(else_br);
-            current_function.blocks.add(current_block);
-            //System.out.print(current_block.block_id);
+            if(current_block != null) {
+                BrInstruction else_br = new BrInstruction(null, "if.end" + count.toString(), null);
+                current_block.addInstruction(else_br);
+                current_function.blocks.add(current_block);
+                //System.out.print(current_block.block_id);
+            }
         }
-
         current_block = next_block;
     }
 
@@ -360,8 +363,8 @@ public class IRBuilder extends ASTVisitor {
         it.object.dot_function = it.func;
         it.object.accept(this);
         //System.out.println(it.object.get_reg);
-        System.out.println("====================");
-        it.object.struct_name.forEach(System.out::println);
+        //System.out.println("====================");
+        //it.object.struct_name.forEach(System.out::println);
         StringBuilder self = null;
         int call_reg;
         if (it.func.returntype.equals("void")) call_reg = 0;
@@ -495,9 +498,11 @@ public class IRBuilder extends ASTVisitor {
         BlockIR loopbody = new BlockIR("for.body" + count.toString());
         current_block = loopbody;
         it.stmts.accept(this);
-        BrInstruction br_to_step = new BrInstruction(null, "for.inc" + count.toString(), null);
-        current_block.addInstruction(br_to_step);
-        current_function.blocks.add(current_block);
+        if(current_block != null){
+            BrInstruction br_to_step = new BrInstruction(null, "for.inc" + count.toString(), null);
+            current_block.addInstruction(br_to_step);
+            current_function.blocks.add(current_block);
+        }
         //System.out.print(current_block.block_id);
         BlockIR for_step = new BlockIR("for.inc" + count.toString());
         current_block = for_step;
@@ -521,6 +526,8 @@ public class IRBuilder extends ASTVisitor {
         end_block.append(loop_stack.peek().a).append(".end").append(loop_stack.peek().b);
         BrInstruction br = new BrInstruction(null, end_block.toString(), null);
         current_block.addInstruction(br);
+        current_function.blocks.add(current_block);
+        current_block = null;
     }
 
     @Override
@@ -529,6 +536,8 @@ public class IRBuilder extends ASTVisitor {
         cond_block.append(loop_stack.peek().a).append(".cond").append(loop_stack.peek().b);
         BrInstruction br = new BrInstruction(null, cond_block.toString(), null);
         current_block.addInstruction(br);
+        current_function.blocks.add(current_block);
+        current_block = null;
     }
 
     @Override

@@ -27,14 +27,6 @@ main:                                   # @main
 	mv	a0, zero
 	call	malloc_
 	sw	a0, 4(sp)
-	lw	a0, 4(a0)
-	addi	a1, zero, 99
-	sw	a1, 0(a0)
-	lw	a0, 4(sp)
-	lw	a0, 4(a0)
-	lw	a0, 0(a0)
-	call	printInt
-	sw	zero, 8(sp)
 	mv	a0, zero
 	lw	ra, 12(sp)
 	addi	sp, sp, 16
