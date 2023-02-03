@@ -6,16 +6,19 @@ import asm.ASMBuilder;
 
 public class StoreInstruction extends InstructionIR {
     ValueUnit value;
+    public int number;
     String from_type;
     String to_type;
-    String to_reg_name;
-    String reg = null;
-    boolean get_value;
+    public String to_reg_name;
+    public String reg = null;
+    public boolean get_value;
     public StoreInstruction(ValueUnit value,String to_type,String to_reg_name) {
         this.value = value;
         this.to_type  = to_type;
         this.to_reg_name = to_reg_name;
         get_value = true;
+        if(to_type.equals("i8"))number = value.number_value;
+        else number = value.bool_value? 1:0;
     }
 
     public StoreInstruction(String reg,String reg_type,String to_reg_name,String name_type){
@@ -29,7 +32,6 @@ public class StoreInstruction extends InstructionIR {
         StringBuilder store = new StringBuilder();
         if(get_value){
             if(to_type.equals("i32")) store.append("\tstore ").append(to_type).append(" ").append(value.number_value).append(", ").append(to_type);
-            else if(to_type.equals("string")||to_type.equals("i8*")) store.append("\tstore ").append(to_type).append(" ").append(value.string_value).append(", ").append(to_type);
             else if(to_type.equals("i1")) store.append("\tstore ").append(to_type).append(" ").append(value.bool_value).append(", ").append(to_type);
         }else {
             //System.out.println(reg);

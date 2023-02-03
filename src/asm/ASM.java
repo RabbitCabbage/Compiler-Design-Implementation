@@ -10,13 +10,12 @@ public class ASM {
     public String printASM(){
         StringBuilder text = new StringBuilder();
         text.append("\t.text\n");
-        AtomicInteger count = new AtomicInteger();
         builder.functions.forEach(f->{
             text.append("\t.globl\t").append(f.IR_name).append("\n");
             text.append("\t.p2align\t2\n");
             text.append(f.IR_name).append("\n");
             //todo blocks
-            text.append(".Lfunc_end").append(count.getAndIncrement()).append(":\n");
+            text.append(".Lfunc_end").append(f.function_count).append(":\n");
         });
         text.append("#    --String Constants\n");
         text.append("\t.section\t.rodata\n");

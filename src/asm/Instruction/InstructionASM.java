@@ -1,5 +1,5 @@
 package asm.Instruction;
 
-public class InstructionASM {
-
+public abstract class InstructionASM {
+    public abstract String toString();
 }
