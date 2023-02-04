@@ -14,11 +14,18 @@ public class ASM {
             text.append("\t.globl\t").append(f.IR_name).append("\n");
             text.append("\t.p2align\t2\n");
             text.append(f.IR_name).append("\n");
-            //todo blocks
+            f.blocks.forEach(b->{
+                text.append(b.block_id).append(":\n");
+                b.instrs.forEach(i->{
+                    text.append(i.toString());
+                });
+            });
             text.append(".Lfunc_end").append(f.function_count).append(":\n");
         });
-        text.append("#    --String Constants\n");
-        text.append("\t.section\t.rodata\n");
+        if(!builder.stringConstants.isEmpty()) {
+            text.append("#    --String Constants\n");
+            text.append("\t.section\t.rodata\n");
+        }
         for(String str: builder.stringConstants.keySet()){
             StringBuilder content = new StringBuilder();
             content.append(builder.stringConstants.get(str));
@@ -28,8 +35,10 @@ public class ASM {
             reg_name.deleteCharAt(0);
             text.append(".L").append(reg_name).append(":\n\t.asciz\t\"").append(content).append("\"\n");
         }
-        text.append("#    --UnInitialized Global Variables;\n");
-        text.append("\t.section\t.sbss\n");
+        if(!builder.globalVars.isEmpty()){
+            text.append("#    --UnInitialized Global Variables;\n");
+            text.append("\t.section\t.sbss\n");
+        }
         for(var globalvar: builder.globalVars.values()){
             StringBuilder reg_name = new StringBuilder();
             reg_name.append(globalvar.declare.reg_name_for_global);

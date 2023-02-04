@@ -17,7 +17,7 @@ public class StoreInstruction extends InstructionIR {
         this.to_type  = to_type;
         this.to_reg_name = to_reg_name;
         get_value = true;
-        if(to_type.equals("i8"))number = value.number_value;
+        if(to_type.equals("i32"))number = value.number_value;
         else number = value.bool_value? 1:0;
     }
 

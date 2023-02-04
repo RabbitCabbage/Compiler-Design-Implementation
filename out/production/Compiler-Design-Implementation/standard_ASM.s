@@ -23,7 +23,10 @@ main:                                   # @main
 # %bb.0:                                # %entry
 	addi	sp, sp, -16
 	.cfi_def_cfa_offset 16
-	mv	a0, zero
+	addi	a0, zero, 100
+	sw	a0, 8(sp)
+	sw	zero, 12(sp)
+	lw	a0, 12(sp)
 	addi	sp, sp, 16
 	ret
 .Lfunc_end1:

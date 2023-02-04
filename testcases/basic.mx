@@ -1,12 +1,8 @@
-int a;
-string hello = "hl";
-class edge{
-    int len;
-    void nothing(){
-        return ;
-    }
-};
+int a = 0;
+int d = 99;
 int main(){
-    int a = 100;
+    int b = a;
+    b = d;
+    int c = b;
     return 0;
 }
