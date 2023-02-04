@@ -62,8 +62,8 @@ public class ASMBuilder {
         callee_restore.instrs.add(lw_ra);
         MvInstruction mv_ra_back =  new MvInstruction("ra","t0");
         callee_restore.instrs.add(mv_ra_back);
-        System.out.println(funcdef.funcdef.name);
-        System.out.println(current_function.stack_pointer);
+        //System.out.println(funcdef.funcdef.name);
+        //System.out.println(current_function.stack_pointer);
 
         //访问alloca，分配alloca所需要的栈空间
         funcdef.blocks.forEach(a->{
@@ -71,7 +71,7 @@ public class ASMBuilder {
                 if(b.getClass().toString().equals("class IR.Instruction.AllocaInstruction"))b.accept(this);
             });
         });
-        System.out.println(current_function.stack_pointer);
+        //System.out.println(current_function.stack_pointer);
 
         funcdef.blocks.forEach(a->{
             current_block = new BlockASM(a.block_id.toString(),current_function.function_count);
@@ -83,7 +83,7 @@ public class ASMBuilder {
             });
             current_function.blocks.add(current_block);
         });
-        System.out.println(current_function.stack_pointer);
+        //System.out.println(current_function.stack_pointer);
 
         //确定函数的参数存在哪一个 a_reg, 或者是存在栈的sp是多少，从0开始计算, 如果别的函数调用的话，
         int areg_count = 0;//计算，总共只有8个a reg
@@ -94,8 +94,8 @@ public class ASMBuilder {
             if(areg_count>=8){
                 current_function.stack_pointer += 4;
                 int para_ofs = offset - (areg_count-8) * 4;
-                System.out.print("spill out ");
-                System.out.println(para_ofs);
+                //System.out.print("spill out ");
+                //System.out.println(para_ofs);
                 from.append(para_ofs).append("(sp)");
             }
             else {
@@ -114,7 +114,7 @@ public class ASMBuilder {
             current_function.blocks.get(0).instrs.add(26,current_block.instrs.get(i));
         }
         current_function.stack_pointer += 4;
-        System.out.println(current_function.stack_pointer);
+        //System.out.println(current_function.stack_pointer);
         AddiInstruction addi_down = new AddiInstruction("sp","sp",-current_function.stack_pointer);
         AddiInstruction addi_up = new AddiInstruction("sp","sp",current_function.stack_pointer);
         current_function.blocks.get(0).instrs.add(0,addi_down);
@@ -138,14 +138,22 @@ public class ASMBuilder {
         if(instr.lhs_reg.startsWith("%")){
             LwInstruction lw = new LwInstruction("t0",current_function.vreg_to_sp.get(instr.lhs_reg));
             current_block.instrs.add(lw);
-        } else {
+        } else if(instr.lhs_reg.equals("null")){
+            MvInstruction mv = new MvInstruction("t0","zero");
+            current_block.instrs.add(mv);
+        }
+        else {
             LiInstruction li = new LiInstruction("t0", Integer.parseInt(instr.lhs_reg));
             current_block.instrs.add(li);
         }
         if(instr.rhs_reg.startsWith("%")){
             LwInstruction lw = new LwInstruction("t1",current_function.vreg_to_sp.get(instr.rhs_reg));
             current_block.instrs.add(lw);
-        } else {
+        } else if(instr.rhs_reg.equals("null")) {
+            MvInstruction mv = new MvInstruction("t1","zero");
+            current_block.instrs.add(mv);
+        }
+        else {
             LiInstruction li = new LiInstruction("t1", Integer.parseInt(instr.rhs_reg));
             current_block.instrs.add(li);
         }
@@ -187,11 +195,15 @@ public class ASMBuilder {
     public void visit(CallInstruction instr){
         //current_block.instrs.add(new Comment(instr.toString()));
         //先把参数上传、
+        //System.out.println(instr.toString());
         int aug_count = 0;
         for (Pair<Boolean, Pair<Integer, String>> have_value_or_get_reg : instr.para_have_value_or_get_reg) {
             if(aug_count<8){ // 加载到a0~a7
                 StringBuilder a = new StringBuilder();
                 a.append('a').append(aug_count);
+                //System.out.println(have_value_or_get_reg.a);
+                //System.out.println(have_value_or_get_reg.b.a);
+                //System.out.println(have_value_or_get_reg.b.b);
                 if(have_value_or_get_reg.a){ // 拿到了值
                     LiInstruction li = new LiInstruction(a.toString(),have_value_or_get_reg.b.a);
                     current_block.instrs.add(li);
@@ -333,6 +345,31 @@ public class ASMBuilder {
         current_block.instrs.add(ret);
     }
     public void visit(StoreInstruction instr){
+        if(instr.reg!=null&&instr.reg.equals("null")){//如果是将null存进来
+            MvInstruction mv = new MvInstruction("t0","zero");
+            current_block.instrs.add(mv);
+            if(instr.to_reg_name.startsWith("%")) {
+                if(current_function.reg_contain_memaddr.contains(instr.to_reg_name)){
+                    //需要向内存写
+                    LwInstruction lw_addr = new LwInstruction("t1",current_function.vreg_to_sp.get(instr.to_reg_name));
+                    current_block.instrs.add(lw_addr);//首先得到地址，放在t1
+                    SwInstruction sw = new SwInstruction("t0","0(t1)");//然后以t1内容作为地址读一个数字
+                    current_block.instrs.add(sw);
+                } else {
+                    SwInstruction sw = new SwInstruction("t0", current_function.vreg_to_sp.get(instr.to_reg_name));
+                    current_block.instrs.add(sw);
+                }
+            } else {
+                StringBuilder name = new StringBuilder();
+                name.append(instr.to_reg_name);
+                name.deleteCharAt(0);
+                LuiInstruction lui = new LuiInstruction("t1", "%hi(" + name + ")");
+                current_block.instrs.add(lui);
+                SwInstruction sw = new SwInstruction("t0","%lo("+name+")(t1)");
+                current_block.instrs.add(sw);
+            }
+            return;
+        }
         if(!instr.get_value && !current_function.para_to_areg_sp.containsKey(instr.reg) && !current_function.vreg_to_sp.containsKey(instr.reg)){
             instr.asm_visited = false;
             return ;//就不访问了
@@ -367,7 +404,6 @@ public class ASMBuilder {
         }
         if(instr.to_reg_name.startsWith("%")) {
             if(current_function.reg_contain_memaddr.contains(instr.to_reg_name)){
-                //需要向内存写
                 LwInstruction lw_addr = new LwInstruction("t1",current_function.vreg_to_sp.get(instr.to_reg_name));
                 current_block.instrs.add(lw_addr);//首先得到地址，放在t1
                 SwInstruction sw = new SwInstruction("t0","0(t1)");//然后以t1内容作为地址读一个数字

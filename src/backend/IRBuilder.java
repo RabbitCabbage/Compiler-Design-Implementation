@@ -295,11 +295,13 @@ public class IRBuilder extends ASTVisitor {
     @Override
     public void visit(IfStatementNode it) {
         //现在current_block还在if的外面
+        //System.out.println(current_function.funcdef.name);
+        //System.out.println(it.pos.toString());
         it.condition.accept(this);
         String cond;
         if(it.condition.get_reg!=null)cond = it.condition.get_reg;
         else cond = it.condition.valueIR.values.get(0).bool_value.toString();
-        System.out.println(cond);
+        //System.out.println(cond);
         StringBuilder count = new StringBuilder();
         count.append(if_statement_count);
         if_statement_count++;
@@ -427,7 +429,7 @@ public class IRBuilder extends ASTVisitor {
                 LoadInstruction load_this = new LoadInstruction(current_function.reg_count++,"%this.addr",getter.getType(it.func.belong.name,0,null));
                 current_block.addInstruction(load_this);
                 self.append(getter.getType(it.func.belong.name,0,null)).append(" %"+String.valueOf(load_this.reg));
-                call.para_have_value_or_get_reg.add(0,new Pair<>(false,new Pair<>(null," %"+String.valueOf(load_this.reg))));
+                call.para_have_value_or_get_reg.add(0,new Pair<>(false,new Pair<>(null,"%"+String.valueOf(load_this.reg))));
             } else {
                 self = new StringBuilder();
                 self.append(getter.getType(it.func.belong.name,0,null)).append(" ").append(it.object.get_reg);
@@ -471,17 +473,19 @@ public class IRBuilder extends ASTVisitor {
         //System.out.println(current_block.block_id);
         BlockIR condition = new BlockIR("while.cond"+count.toString());
         current_block = condition;
-        it.condition.accept(this);
-        String cond;
-        if(it.condition.get_reg!=null)cond = it.condition.get_reg;
-        else cond = it.condition.valueIR.values.get(0).bool_value.toString();
+        if(it.condition!=null)it.condition.accept(this);
+        String cond = null;
+        if(it.condition!=null) {
+            if (it.condition.get_reg != null) cond = it.condition.get_reg;
+            else cond = it.condition.valueIR.values.get(0).bool_value.toString();
+        }
         BrInstruction cond_br_body = new BrInstruction(cond, "while.body" + count.toString(), "while.end" + count.toString());
         current_block.addInstruction(cond_br_body);
         current_function.blocks.add(current_block);
         //System.out.print(current_block.block_id);
         BlockIR loopbody = new BlockIR("while.body" + count.toString());
         current_block = loopbody;
-        it.stmt.accept(this);
+        if(it.stmt!=null)it.stmt.accept(this);
         BrInstruction br_out = new BrInstruction(null, "while.cond" + count.toString(), null);
         current_block.addInstruction(br_out);
         current_function.blocks.add(current_block);
@@ -509,16 +513,18 @@ public class IRBuilder extends ASTVisitor {
         current_block.addInstruction(br_to_for_condition);
         current_function.blocks.add(current_block);
         current_block = for_condition_block;
-        it.condition.accept(this);
-        String cond;
-        if(it.condition.get_reg!=null)cond = it.condition.get_reg;
-        else cond = it.condition.valueIR.values.get(0).bool_value.toString();
+        if(it.condition!=null)it.condition.accept(this);
+        String cond = null;
+        if(it.condition!=null){
+            if(it.condition.get_reg!=null)cond = it.condition.get_reg;
+            else cond = it.condition.valueIR.values.get(0).bool_value.toString();
+        }
         BrInstruction br_to_loop = new BrInstruction(cond, "for.body"+count.toString(), "for.end"+count.toString());
         current_block.addInstruction(br_to_loop);
         current_function.blocks.add(current_block);
         BlockIR loopbody = new BlockIR("for.body" + count.toString());
         current_block = loopbody;
-        it.stmts.accept(this);
+        if(it.stmts!=null)it.stmts.accept(this);
         if(current_block != null){
             BrInstruction br_to_step = new BrInstruction(null, "for.inc" + count.toString(), null);
             current_block.addInstruction(br_to_step);
@@ -527,7 +533,7 @@ public class IRBuilder extends ASTVisitor {
         //System.out.print(current_block.block_id);
         BlockIR for_step = new BlockIR("for.inc" + count.toString());
         current_block = for_step;
-        it.next.accept(this);
+        if(it.next!=null)it.next.accept(this);
         BrInstruction step_br_to_cond = new BrInstruction(null,"for.cond"+count.toString(),null);
         current_block.addInstruction(step_br_to_cond);
         //System.out.print(current_block.block_id);
@@ -563,6 +569,7 @@ public class IRBuilder extends ASTVisitor {
 
     @Override
     public void visit(ReturnStatementNode it) {
+        //System.out.println(current_function.funcdef.name);
         if (it.value != null) {
             it.value.accept(this);
             if (it.value.get_value) {
@@ -669,6 +676,14 @@ public class IRBuilder extends ASTVisitor {
                 StringBuilder info = new StringBuilder();
                 info.append("i1 ").append(it.primaryExpression);
             }
+        }
+        if (it.exprtype == PrimaryExpressionNode.ExpressionType.nullLiteralExpr){
+            it.get_reg = "null";
+        }
+        if (it.exprtype == PrimaryExpressionNode.ExpressionType.thisExpr){
+            LoadInstruction load = new LoadInstruction(current_function.reg_count++,current_function.para_names.get(0)+".addr", getter.getType(it.type,it.dim,null));
+            current_block.addInstruction(load);
+            it.get_reg = "%"+String.valueOf(load.reg);
         }
     }
     @Override
@@ -874,15 +889,18 @@ public class IRBuilder extends ASTVisitor {
                 rhs_reg = it.rhs.get_reg;
             }
             int res_reg = binary_expression_count++;
-            String type = getter.getType(it.lhs.type, it.lhs.dim,it.lhs.get_reg);
             //System.out.println(lhs_reg);
             //System.out.println(rhs_reg);
-            if(it.lhs.type.equals("int")||it.lhs.type.equals("bool")){
+            String ttype = (it.lhs.type.equals("null")?it.rhs.type:it.lhs.type);
+            int ddim = (it.lhs.type.equals("null")?it.rhs.dim:it.lhs.dim);
+            String type = getter.getType(ttype, ddim,it.lhs.get_reg);
+            if(ddim == 0 && (ttype.equals("int")||ttype.equals("bool")||ttype.equals("string"))){
+                if(ttype.equals("int")||ttype.equals("bool")){
                 BinaryInstruction binary = new BinaryInstruction(it.opcode, lhs_reg, rhs_reg, type, res_reg);
                 it.get_reg = binary.res_toString();
                 //System.out.println(it.get_reg);
                 current_block.addInstruction(binary);
-            } else if(it.lhs.type.equals("string")){
+                } else {
                 CallInstruction call = new CallInstruction("","",call_statement_count++);
                 if(it.opcode.equals("+")){
                     call.func_name = "string_concat";
@@ -964,6 +982,15 @@ public class IRBuilder extends ASTVisitor {
                 }
                 current_block.addInstruction(call);
                 it.get_reg = call.res_toString();
+            }
+            } else {
+                //应该是数组或者类对象和常量null的计算，给null分配一个寄存器，%null
+                //或者类对象之间的运算, 比较是不是相同的
+                if(it.lhs.type.equals("null"))it.lhs.get_reg = "null";
+                if(it.rhs.type.equals("null")) it.rhs.get_reg = "null";
+                BinaryInstruction binary = new BinaryInstruction(it.opcode,it.lhs.get_reg,it.rhs.get_reg,getter.getType(ttype,ddim,null),binary_expression_count++);
+                it.get_reg = binary.res_toString();
+                current_block.addInstruction(binary);
             }
         }
     }

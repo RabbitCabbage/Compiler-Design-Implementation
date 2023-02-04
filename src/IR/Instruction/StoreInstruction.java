@@ -25,6 +25,7 @@ public class StoreInstruction extends InstructionIR {
     public StoreInstruction(String reg,String reg_type,String to_reg_name,String name_type){
         this.reg = reg;
         from_type = reg_type;
+        if(from_type.equals("null"))from_type = name_type;
         to_type = name_type;
         this.to_reg_name = to_reg_name;
         get_value = false;

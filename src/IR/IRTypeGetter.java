@@ -16,6 +16,7 @@ public class IRTypeGetter {
     public String getType(String typename,int dim,String reg_name) {
         //System.out.println(typename);
         StringBuilder type = new StringBuilder();
+        if(typename.equals("null"))return "null";
         if(typename.equals("int"))type.append("i32");
         else if(typename.equals("void"))return typename;
         else if(typename.equals("string")){

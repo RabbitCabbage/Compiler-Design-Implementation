@@ -83,7 +83,7 @@ public class LLVM {
         //System.out.println(text.toString());
         for(var fcdef: functions.values()){
             //System.out.println(fcdef.IR_name);
-            if(fcdef.funcdef.belong!=null)System.out.println(fcdef.funcdef.belong.name);
+            //if(fcdef.funcdef.belong!=null)System.out.println(fcdef.funcdef.belong.name);
             //System.out.println(fcdef.para_names.size());
             //System.out.println(fcdef.funcdef.parameterlist.size());
             text.append("define ").append(getter.getType(fcdef.funcdef.returntype,fcdef.funcdef.returndim,null)).append(" @").append(fcdef.IR_name).append("(");
@@ -99,16 +99,17 @@ public class LLVM {
             }
             text.append("){\n");
             if(fcdef.funcdef.stmts != null){
+                //System.out.println(fcdef.funcdef.name);
                 //先把所有的statment收集到StatementIR里面
                 StringBuilder alloca =  new StringBuilder();
                 fcdef.blocks.forEach(a->{
-                    //System.out.println("new block");
+                    //System.out.println(a.block_id);
                     a.instrs.forEach(b->{
                         if(b.getClass().toString().equals("class IR.Instruction.AllocaInstruction"))alloca.append(b.toString());
                     });
                 });
                 fcdef.blocks.forEach(a->{
-                    //System.out.println("new block");
+                    //System.out.println(a.block_id);
                     text.append(a.block_id).append(":\n");
                     if(a.block_id.toString().equals("entry"))text.append(alloca);
                     a.instrs.forEach(b->{

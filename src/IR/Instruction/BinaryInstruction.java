@@ -29,7 +29,8 @@ public class BinaryInstruction extends InstructionIR{
         else if(opcode.equals("&"))reg.append("and").append(result_reg);
         else if(opcode.equals("|"))reg.append("or").append(result_reg);
         else if(opcode.equals("^"))reg.append("xor").append(result_reg);
-        else if(opcode.equals("==")||opcode.equals("!=")||opcode.equals("<")||opcode.equals("<=")||opcode.equals(">")||opcode.equals(">="))reg.append("cmp").append(result_reg);
+        else if(opcode.equals("==")||opcode.equals("!=")||opcode.equals("<")||opcode.equals("<=")||opcode.equals(">")||opcode.equals(">="))
+            reg.append("cmp").append(result_reg);
         //System.out.println(reg.toString());
         return reg.toString();    }
     public String toString(){
