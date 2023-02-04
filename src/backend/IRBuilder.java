@@ -362,7 +362,6 @@ public class IRBuilder extends ASTVisitor {
         it.object.dot_function = it.func;
         it.object.accept(this);
         //System.out.println(it.object.get_reg);
-        //System.out.println("====================");
         //it.object.struct_name.forEach(System.out::println);
         StringBuilder self = null;
         int call_reg;
@@ -382,6 +381,7 @@ public class IRBuilder extends ASTVisitor {
                 ((MemberCallExpressionNode) it.object).object.accept(this);
             }
             call.para.add("i8* "+((MemberCallExpressionNode)it.object).object.get_reg);
+            call.para_have_value_or_get_reg.add(new Pair<>(false,new Pair<>(null,((MemberCallExpressionNode)it.object).object.get_reg)));
         }
         else if(it.object.getClass().toString().equals("class ast.MemberCallExpressionNode")&&((MemberCallExpressionNode)it.object).object.dim>0 && IR_name.equals("size")){
             //System.out.println(it.func.name);
@@ -394,6 +394,7 @@ public class IRBuilder extends ASTVisitor {
             //current_block.addInstruction(load_array);
             current_block.addInstruction(bitcast);
             call.para.add("i8* "+bitcast.res_toString());
+            call.para_have_value_or_get_reg.add(new Pair<>(false,new Pair<>(null,bitcast.res_toString())));
             call.func_name = "getArraySize";
         }
         else if(!it.object.struct_name.isEmpty()||!it.name_index_in_class.isEmpty()){
@@ -419,7 +420,9 @@ public class IRBuilder extends ASTVisitor {
         }else if(it.func.belong != null){
             if(it.object.getClass().toString().equals("class ast.PrimaryExpressionNode")){
                 self = new StringBuilder();
-                self.append(getter.getType(it.func.belong.name,0,null)).append(" %this");
+                LoadInstruction load_this = new LoadInstruction(current_function.reg_count++,"%this.addr",getter.getType(it.func.belong.name,0,null));
+                current_block.addInstruction(load_this);
+                self.append(getter.getType(it.func.belong.name,0,null)).append(" %"+String.valueOf(load_this.reg));
             } else {
                 self = new StringBuilder();
                 self.append(getter.getType(it.func.belong.name,0,null)).append(" ").append(it.object.get_reg);
@@ -430,9 +433,18 @@ public class IRBuilder extends ASTVisitor {
             a.accept(this);
             StringBuilder para = new StringBuilder();
             //System.out.println(llvm.stringConstants.get(a.get_reg)+"\t"+a.get_reg);
-            if(a.type.equals("string")&&a.get_value) para.append(getter.getType(a.type, a.dim, null)).append(" ").append(a.get_reg);
-            else if(a.get_value) para.append(getter.getType(a.type,a.dim,a.get_reg)).append(" ").append(a.type.equals("int")?a.valueIR.values.get(0).number_value:a.valueIR.values.get(0).bool_value);
-            else para.append(getter.getType(a.type,a.dim,a.get_reg)).append(" ").append(a.get_reg);
+            if(a.type.equals("string")&&a.get_value) {
+                para.append(getter.getType(a.type, a.dim, null)).append(" ").append(a.get_reg);
+                call.para_have_value_or_get_reg.add(new Pair<>(false,new Pair<>(null,a.get_reg)));
+            }
+            else if(a.get_value) {
+                para.append(getter.getType(a.type,a.dim,a.get_reg)).append(" ").append(a.type.equals("int")?a.valueIR.values.get(0).number_value:a.valueIR.values.get(0).bool_value);
+                call.para_have_value_or_get_reg.add(new Pair<>(true,new Pair<>(a.type.equals("int")?a.valueIR.values.get(0).number_value:(a.valueIR.values.get(0).bool_value?1:0),null)));
+            }
+            else {
+                para.append(getter.getType(a.type,a.dim,a.get_reg)).append(" ").append(a.get_reg);
+                call.para_have_value_or_get_reg.add(new Pair<>(false,new Pair<>(null,a.get_reg)));
+            }
             call.para.add(para.toString());
         });
         current_block.addInstruction(call);
@@ -871,6 +883,8 @@ public class IRBuilder extends ASTVisitor {
                     para_rhs.append("i8* ").append(it.rhs.get_reg);
                     call.para.add(para_lhs.toString());
                     call.para.add(para_rhs.toString());
+                    call.para_have_value_or_get_reg.add(new Pair<>(false,new Pair<>(null,it.lhs.get_reg)));
+                    call.para_have_value_or_get_reg.add(new Pair<>(false,new Pair<>(null,it.rhs.get_reg)));
                 } else if(it.opcode.equals("==")){
                     call.func_name = "string_equal";
                     call.return_type = "i1";
@@ -880,6 +894,8 @@ public class IRBuilder extends ASTVisitor {
                     para_rhs.append("i8* ").append(it.rhs.get_reg);
                     call.para.add(para_lhs.toString());
                     call.para.add(para_rhs.toString());
+                    call.para_have_value_or_get_reg.add(new Pair<>(false,new Pair<>(null,it.lhs.get_reg)));
+                    call.para_have_value_or_get_reg.add(new Pair<>(false,new Pair<>(null,it.rhs.get_reg)));
                 }else if(it.opcode.equals("!=")){
                     call.func_name = "string_nequal";
                     call.return_type = "i1";
@@ -889,6 +905,8 @@ public class IRBuilder extends ASTVisitor {
                     para_rhs.append("i8* ").append(it.rhs.get_reg);
                     call.para.add(para_lhs.toString());
                     call.para.add(para_rhs.toString());
+                    call.para_have_value_or_get_reg.add(new Pair<>(false,new Pair<>(null,it.lhs.get_reg)));
+                    call.para_have_value_or_get_reg.add(new Pair<>(false,new Pair<>(null,it.rhs.get_reg)));
                 }else if(it.opcode.equals("<")){
                     call.func_name = "string_lessthan";
                     call.return_type = "i1";
@@ -898,6 +916,8 @@ public class IRBuilder extends ASTVisitor {
                     para_rhs.append("i8* ").append(it.rhs.get_reg);
                     call.para.add(para_lhs.toString());
                     call.para.add(para_rhs.toString());
+                    call.para_have_value_or_get_reg.add(new Pair<>(false,new Pair<>(null,it.lhs.get_reg)));
+                    call.para_have_value_or_get_reg.add(new Pair<>(false,new Pair<>(null,it.rhs.get_reg)));
                 }else if(it.opcode.equals(">")){
                     call.func_name = "string_greaterthan";
                     call.return_type = "i8*";
@@ -907,6 +927,8 @@ public class IRBuilder extends ASTVisitor {
                     para_rhs.append("i8* ").append(it.rhs.get_reg);
                     call.para.add(para_lhs.toString());
                     call.para.add(para_rhs.toString());
+                    call.para_have_value_or_get_reg.add(new Pair<>(false,new Pair<>(null,it.lhs.get_reg)));
+                    call.para_have_value_or_get_reg.add(new Pair<>(false,new Pair<>(null,it.rhs.get_reg)));
                 }else if(it.opcode.equals("<=")){
                     call.func_name = "string_notgreaterthan";
                     call.return_type = "i1";
@@ -916,6 +938,8 @@ public class IRBuilder extends ASTVisitor {
                     para_rhs.append("i8* ").append(it.rhs.get_reg);
                     call.para.add(para_lhs.toString());
                     call.para.add(para_rhs.toString());
+                    call.para_have_value_or_get_reg.add(new Pair<>(false,new Pair<>(null,it.lhs.get_reg)));
+                    call.para_have_value_or_get_reg.add(new Pair<>(false,new Pair<>(null,it.rhs.get_reg)));
                 }else if(it.opcode.equals(">=")){
                     call.func_name = "string_notlessthan";
                     call.return_type = "i1";
@@ -925,6 +949,8 @@ public class IRBuilder extends ASTVisitor {
                     para_rhs.append("i8* ").append(it.rhs.get_reg);
                     call.para.add(para_lhs.toString());
                     call.para.add(para_rhs.toString());
+                    call.para_have_value_or_get_reg.add(new Pair<>(false,new Pair<>(null,it.lhs.get_reg)));
+                    call.para_have_value_or_get_reg.add(new Pair<>(false,new Pair<>(null,it.rhs.get_reg)));
                 }
                 current_block.addInstruction(call);
                 it.get_reg = call.res_toString();
@@ -1116,12 +1142,16 @@ public class IRBuilder extends ASTVisitor {
                 if(first.get_value){
                     para_size.append("i32 ").append(first.valueIR.values.get(0).number_value);
                     para_length.append("i32 ").append(first.valueIR.values.get(0).number_value*getter.getSize(it.type,it.dim));
+                    call.para_have_value_or_get_reg.add(new Pair<>(true,new Pair<>(first.valueIR.values.get(0).number_value,null)));
+                    call.para_have_value_or_get_reg.add(new Pair<>(true,new Pair<>(first.valueIR.values.get(0).number_value*getter.getSize(it.type,it.dim),null)));
                 }
                 else {
                     BinaryInstruction mul = new BinaryInstruction("*",first.get_reg,String.valueOf(getter.getSize(it.type,it.dim)),"i32",binary_expression_count++);
                     current_block.addInstruction(mul);
                     para_size.append("i32 ").append(first.get_reg);
                     para_length.append("i32 ").append(mul.res_toString());
+                    call.para_have_value_or_get_reg.add(new Pair<>(false,new Pair<>(null,first.get_reg)));
+                    call.para_have_value_or_get_reg.add(new Pair<>(false,new Pair<>(null,mul.res_toString())));
                 }
                 call.para.add(para_size.toString());
                 call.para.add(para_length.toString());
@@ -1213,9 +1243,11 @@ public class IRBuilder extends ASTVisitor {
                 StringBuilder para_size = new StringBuilder();
                 StringBuilder para_length = new StringBuilder();
                 para_size.append( "i32 0");
-                para_length.append( "i32 ").append(String.valueOf(getter.getSize(it.type,it.dim)).toString());
+                para_length.append( "i32 ").append(String.valueOf(getter.getSize(it.type,it.dim)));
                 call.para.add(para_size.toString());
                 call.para.add(para_length.toString());
+                call.para_have_value_or_get_reg.add(new Pair<>(true,new Pair<>(0,null)));
+                call.para_have_value_or_get_reg.add(new Pair<>(true,new Pair<>(getter.getSize(it.type,it.dim),null)));
                 //System.out.println(para_length);
                 BitcastInstruction bitcast = new BitcastInstruction("i8*",getter.getType(it.type,it.dim,null),call.res_toString(),current_function.reg_count++);
                 current_block.addInstruction(call);
@@ -1224,6 +1256,7 @@ public class IRBuilder extends ASTVisitor {
                 if(cls.methodmap.containsKey(it.type)) {
                     CallInstruction construct = new CallInstruction(getter.getType(it.type, it.dim, null), it.type, call_statement_count++);
                     construct.para.add(getter.getType(it.type, it.dim, null) + " " + bitcast.res_toString());
+                    construct.para_have_value_or_get_reg.add(new Pair<>(false,new Pair<>(null,bitcast.res_toString())));
                     current_block.addInstruction(construct);
                     it.get_reg = construct.res_toString();
                 }else it.get_reg = bitcast.res_toString();

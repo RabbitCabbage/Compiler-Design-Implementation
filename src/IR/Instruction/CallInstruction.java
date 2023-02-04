@@ -1,6 +1,7 @@
 package IR.Instruction;
 
 import asm.ASMBuilder;
+import org.antlr.v4.runtime.misc.Pair;
 
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -9,6 +10,7 @@ public class CallInstruction extends InstructionIR{
     public String func_name;
     public String return_type;
     public ArrayList<String> para;
+    public ArrayList<Pair<Boolean, Pair<Integer,String>>> para_have_value_or_get_reg;
     public int call_reg;
     public String class_belong_info = null;
 
@@ -18,6 +20,7 @@ public class CallInstruction extends InstructionIR{
         this.return_type = return_type;
         this.para = new ArrayList<>();
         this.call_reg = call_reg;
+        para_have_value_or_get_reg = new ArrayList<>();
     }
     @Override public String toString(){
         StringBuilder call = new StringBuilder();

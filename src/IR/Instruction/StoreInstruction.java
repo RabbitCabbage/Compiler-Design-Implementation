@@ -12,6 +12,7 @@ public class StoreInstruction extends InstructionIR {
     public String to_reg_name;
     public String reg = null;
     public boolean get_value;
+    public boolean asm_visited = false;
     public StoreInstruction(ValueUnit value,String to_type,String to_reg_name) {
         this.value = value;
         this.to_type  = to_type;

@@ -45,14 +45,14 @@ public class Compiler {
             PrintWriter pw1 = new PrintWriter(fw1);
             pw1.print(ir.llvm.toDotLLVM());
             pw1.flush();
-//            ASM asm = new ASM(new ASMBuilder());
-//            asm.builder.visit(ir.llvm);
-//            File file2 = new File("assembly.s");
-//            if(!file2.exists())file2.createNewFile();
-//            FileWriter fw2 = new FileWriter("assembly.s");
-//            PrintWriter pw2 = new PrintWriter(fw2);
-//            pw2.print(asm.printASM());
-//            pw2.flush();
+            ASM asm = new ASM(new ASMBuilder());
+            asm.builder.visit(ir.llvm);
+            File file2 = new File("assembly.s");
+            if(!file2.exists())file2.createNewFile();
+            FileWriter fw2 = new FileWriter("assembly.s");
+            PrintWriter pw2 = new PrintWriter(fw2);
+            pw2.print(asm.printASM());
+            pw2.flush();
         } catch (Error error) {
             System.err.println(error.toString());
             throw new RuntimeException();
