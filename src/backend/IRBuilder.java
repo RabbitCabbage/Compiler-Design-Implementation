@@ -26,7 +26,6 @@ public class IRBuilder extends ASTVisitor {
     public int string_constant_count;
     public int short_cut_count;
     public String last_identifier_expression_reg;//记下的是上一个访问到的identifier的名字
-    public int sext_instr_count;
     public int bracket_count;
     public int new_alternative_count;
     public int new_loop_count;
@@ -44,7 +43,6 @@ public class IRBuilder extends ASTVisitor {
         binary_expression_count = 0;
         string_constant_count = 0;
         loop_stack = new Stack<>();
-        sext_instr_count = 0;
         bracket_count = 0;
         new_alternative_count = 0;
         new_loop_count = 0;
@@ -786,44 +784,50 @@ public class IRBuilder extends ASTVisitor {
             return ;
         }//常量传播， opt用
         if(it.opcode.equals("&&")){
-            StringBuilder count = new StringBuilder();
-            count.append(short_cut_count++);
-            it.lhs.accept(this);
-            BrInstruction short_cut_to_rhs = new BrInstruction(it.lhs.get_reg, "land.rhs"+count.toString(),"land.end"+count.toString());
-            BlockIR rhs = new BlockIR("land.rhs"+count.toString());
-            BlockIR next = new BlockIR("land.end"+count.toString());
-            String former_block = current_block.block_id.toString();
-            current_block.addInstruction(short_cut_to_rhs);
-            current_function.blocks.add(current_block);
-            current_block = rhs;
-            it.rhs.accept(this);
-            BrInstruction short_cut_end = new BrInstruction(null,"land.end"+count.toString(),null);
-            current_block.addInstruction(short_cut_end);
-            current_function.blocks.add(current_block);
-            current_block = next;
-            PhiInstruction short_cut_phi = new PhiInstruction(current_function.reg_count++,former_block,"false","land.rhs"+count.toString(),it.rhs.get_reg);
-            it.get_reg = short_cut_phi.res_toString();
-            current_block.addInstruction(short_cut_phi);
+            // bool flag;
+            // if(lhs) flag = rhs;
+            // else flag = false;
+            DeclarationNode declare_flag = new DeclarationNode("flag"+String.valueOf(short_cut_count++),null,it.pos);
+            declare_flag.type = "bool";
+            declare_flag.dim = 0;
+            declare_flag.accept(this);
+            PrimaryExpressionNode flag = new PrimaryExpressionNode(it.pos, declare_flag.name);
+            flag.exprtype = PrimaryExpressionNode.ExpressionType.identifierExpr;
+            flag.type = "bool";
+            flag.dim = 0;
+            AssignmentExpressionNode then_expr = new AssignmentExpressionNode(flag,it.rhs,it.pos);
+            PrimaryExpressionNode false_unit = new PrimaryExpressionNode(it.pos,"false");
+            false_unit.exprtype = PrimaryExpressionNode.ExpressionType.boolLiteralExpr;
+            false_unit.type = "bool";
+            false_unit.dim =0;
+            AssignmentExpressionNode else_expr = new AssignmentExpressionNode(flag,false_unit,it.pos);
+            IfStatementNode andand = new IfStatementNode(it.lhs,new ExpressionStatementNode(then_expr,it.pos),new ExpressionStatementNode(else_expr,it.pos),it.pos);
+            andand.accept(this);
+            flag.accept(this);
+            it.get_reg  = flag.get_reg;
         }
         else if(it.opcode.equals("||")){
-            StringBuilder count = new StringBuilder();
-            count.append(short_cut_count++);
-            it.lhs.accept(this);
-            BrInstruction short_cut_to_rhs = new BrInstruction(it.lhs.get_reg, "land.end"+count.toString(),"land.rhs"+count.toString());
-            BlockIR rhs = new BlockIR("land.rhs"+count.toString());
-            BlockIR next = new BlockIR("land.end"+count.toString());
-            String former_block = current_block.block_id.toString();
-            current_block.addInstruction(short_cut_to_rhs);
-            current_function.blocks.add(current_block);
-            current_block = rhs;
-            it.rhs.accept(this);
-            BrInstruction short_cut_end = new BrInstruction(null,"land.end"+count.toString(),null);
-            current_block.addInstruction(short_cut_end);
-            current_function.blocks.add(current_block);
-            current_block = next;
-            PhiInstruction short_cut_phi = new PhiInstruction(current_function.reg_count++,former_block,"true","land.rhs"+count.toString(),it.rhs.get_reg);
-            it.get_reg = short_cut_phi.res_toString();
-            current_block.addInstruction(short_cut_phi);
+            // bool flag;
+            // if(lhs) flag = true;
+            // else flag = rhs;
+            DeclarationNode declare_flag = new DeclarationNode("flag"+String.valueOf(short_cut_count++),null,it.pos);
+            declare_flag.type = "bool";
+            declare_flag.dim = 0;
+            declare_flag.accept(this);
+            PrimaryExpressionNode flag = new PrimaryExpressionNode(it.pos, declare_flag.name);
+            flag.exprtype = PrimaryExpressionNode.ExpressionType.identifierExpr;
+            flag.type = "bool";
+            flag.dim = 0;
+            PrimaryExpressionNode true_unit = new PrimaryExpressionNode(it.pos,"true");
+            true_unit.exprtype = PrimaryExpressionNode.ExpressionType.boolLiteralExpr;
+            true_unit.type = "bool";
+            true_unit.dim =0;
+            AssignmentExpressionNode then_expr = new AssignmentExpressionNode(flag,true_unit,it.pos);
+            AssignmentExpressionNode else_expr = new AssignmentExpressionNode(flag,it.rhs,it.pos);
+            IfStatementNode oror = new IfStatementNode(it.lhs,new ExpressionStatementNode(then_expr,it.pos),new ExpressionStatementNode(else_expr,it.pos),it.pos);
+            oror.accept(this);
+            flag.accept(this);
+            it.get_reg  = flag.get_reg;
         }
         else {
             it.lhs.accept(this);
@@ -1216,7 +1220,13 @@ public class IRBuilder extends ASTVisitor {
                 BitcastInstruction bitcast = new BitcastInstruction("i8*",getter.getType(it.type,it.dim,null),call.res_toString(),current_function.reg_count++);
                 current_block.addInstruction(call);
                 current_block.addInstruction(bitcast);
-                it.get_reg = bitcast.res_toString();
+                ClassDefNode cls = symbols.classTypes.get(it.type);
+                if(cls.methodmap.containsKey(it.type)) {
+                    CallInstruction construct = new CallInstruction(getter.getType(it.type, it.dim, null), it.type, call_statement_count++);
+                    construct.para.add(getter.getType(it.type, it.dim, null) + " " + bitcast.res_toString());
+                    current_block.addInstruction(construct);
+                    it.get_reg = construct.res_toString();
+                }else it.get_reg = bitcast.res_toString();
             }
 
 //        } else {//并且mx的所有数组都是先alloca一个指针,这种写法不能适应mx的可变长数组，比如一个二维数组int[3][]，我的三个一维数组的维度是可以不相同的。

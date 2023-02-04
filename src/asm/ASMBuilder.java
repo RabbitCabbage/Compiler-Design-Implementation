@@ -107,11 +107,7 @@ public class ASMBuilder {
             current_block.instrs.add(sw);//再把值写进去，写到resreg对应的
         }
     }
-    public void visit(PhiInstruction instr){
-        current_block.instrs.add(new Comment(instr.toString()));
-        current_function.stack_pointer += 4;
-        current_function.vreg_to_sp.put(instr.res_toString(), current_function.stack_pointer);
-    }
+
     public void visit(RetInstruction instr){
         current_block.instrs.add(new Comment(instr.toString()));
     }

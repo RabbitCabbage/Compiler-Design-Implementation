@@ -46,11 +46,7 @@ public class IRTypeGetter {
         if(typename.equals("void"))return 0;
         else {
             ClassDefNode cls = symbols.classTypes.get(typename);
-            AtomicInteger size = new AtomicInteger();
-            cls.vardefs.forEach(a-> {
-                size.addAndGet(getSize(a.typename, a.dim));
-            });
-            return size.get();
+            return cls.vardefs.size()*4;
         }
     }
 }
