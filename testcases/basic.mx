@@ -1,9 +1,15 @@
-int hello(int x, int y, int z, int a, int b, int c, int d, int e, int hell, int shit, bool fuck, string damn){
-    return hell;
-}
-int he = 9;
 int main(){
-    int h = getInt();
-    h = hello(0,99,he,h,h,h,h,h,h,h,false,"damn it");
+    int [] hello = new int [5];
+    hello[0] = 99;
+    printInt(hello[0]);
     return 0;
 }
+/*int main(){
+      int [] hello = new int [5];
+      hello[0] = 99;
+      int [][] doub = new int[5][3];
+      doub[1][2] = 999;
+      printInt(hello[0]);
+      printInt(doub[1][2]);
+      return 0;
+  }*/

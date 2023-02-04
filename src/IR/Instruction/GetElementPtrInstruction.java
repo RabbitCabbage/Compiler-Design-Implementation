@@ -9,8 +9,8 @@ public class GetElementPtrInstruction extends InstructionIR{
     public String result_reg;//目标在的reg
     public String instance_reg;
     int index;
-    boolean for_struct;
-    boolean for_array;
+    public boolean for_struct;
+    public boolean for_array;
     int length;
     public  GetElementPtrInstruction(String type,String resreg,String instreg,int ind){
         this.type = type;
@@ -30,6 +30,7 @@ public class GetElementPtrInstruction extends InstructionIR{
     }
     public String array_reg;
     public String offset_reg;
+    public int offset_number;
     public int dim;
     public int res_count;
     public ArrayList<Integer> sizes;

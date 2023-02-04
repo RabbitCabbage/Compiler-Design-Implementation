@@ -1294,14 +1294,17 @@ public class IRBuilder extends ASTVisitor {
         it.object.accept(this);
         //System.out.println(it.object.dim);
         String offset_reg;
+        int offset_number = 0;
         if(it.offset.get_value){
             offset_reg = String.valueOf(it.offset.valueIR.values.get(0).number_value);
+            offset_number = it.offset.valueIR.values.get(0).number_value;
         }else {
             offset_reg = it.offset.get_reg;
         }
         //System.out.println(it.object.dim);
         //System.out.println(getter.getType(it.object.type,it.object.dim, it.object.get_reg));
         GetElementPtrInstruction gep = new GetElementPtrInstruction(it.object.get_reg,offset_reg, getter.getType(it.object.type,it.object.dim, it.object.get_reg),it.object.dim,bracket_count++);
+        gep.offset_number = offset_number;
         current_block.addInstruction(gep);
         if(it.visited_as_lhs){
             it.get_reg = gep.res_toString();
