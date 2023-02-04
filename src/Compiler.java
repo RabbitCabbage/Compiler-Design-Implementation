@@ -20,9 +20,9 @@ import util.error.SemanticError;
 
 public class Compiler {
     public static void main(String[] args) throws Exception {
-//        InputStream input = System.in;
+        InputStream input = System.in;
 //        InputStream input = new FileInputStream("./testcases/codegen/shortest_path/dijkstra.mx");
-        InputStream input = new FileInputStream("./testcases/basic.mx");
+//        InputStream input = new FileInputStream("./testcases/basic.mx");
 //        InputStream input = new FileInputStream(args[0]);
         try {
             MxLexer lexer = new MxLexer(CharStreams.fromStream(input));
@@ -47,9 +47,9 @@ public class Compiler {
             pw1.flush();
             ASM asm = new ASM(new ASMBuilder());
             asm.builder.visit(ir.llvm);
-            File file2 = new File("assembly.s");
+            File file2 = new File("test.s");
             if(!file2.exists())file2.createNewFile();
-            FileWriter fw2 = new FileWriter("assembly.s");
+            FileWriter fw2 = new FileWriter("test.s");
             PrintWriter pw2 = new PrintWriter(fw2);
             pw2.print(asm.printASM());
             pw2.flush();

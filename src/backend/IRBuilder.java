@@ -296,7 +296,10 @@ public class IRBuilder extends ASTVisitor {
     public void visit(IfStatementNode it) {
         //现在current_block还在if的外面
         it.condition.accept(this);
-        String cond = it.condition.get_reg;
+        String cond;
+        if(it.condition.get_reg!=null)cond = it.condition.get_reg;
+        else cond = it.condition.valueIR.values.get(0).bool_value.toString();
+        System.out.println(cond);
         StringBuilder count = new StringBuilder();
         count.append(if_statement_count);
         if_statement_count++;
@@ -469,7 +472,9 @@ public class IRBuilder extends ASTVisitor {
         BlockIR condition = new BlockIR("while.cond"+count.toString());
         current_block = condition;
         it.condition.accept(this);
-        String cond = it.condition.get_reg;
+        String cond;
+        if(it.condition.get_reg!=null)cond = it.condition.get_reg;
+        else cond = it.condition.valueIR.values.get(0).bool_value.toString();
         BrInstruction cond_br_body = new BrInstruction(cond, "while.body" + count.toString(), "while.end" + count.toString());
         current_block.addInstruction(cond_br_body);
         current_function.blocks.add(current_block);
@@ -505,7 +510,9 @@ public class IRBuilder extends ASTVisitor {
         current_function.blocks.add(current_block);
         current_block = for_condition_block;
         it.condition.accept(this);
-        String cond = it.condition.get_reg;
+        String cond;
+        if(it.condition.get_reg!=null)cond = it.condition.get_reg;
+        else cond = it.condition.valueIR.values.get(0).bool_value.toString();
         BrInstruction br_to_loop = new BrInstruction(cond, "for.body"+count.toString(), "for.end"+count.toString());
         current_block.addInstruction(br_to_loop);
         current_function.blocks.add(current_block);
@@ -850,7 +857,7 @@ public class IRBuilder extends ASTVisitor {
             if (it.lhs.get_value) {
                 if (it.lhs.type.equals("int")) lhs_reg = it.lhs.valueIR.values.get(0).number_value.toString();
                 else if (it.lhs.type.equals("string"))
-                    lhs_reg = "\"" + it.lhs.valueIR.values.get(0).string_value.toString() + "\"";
+                    lhs_reg = it.lhs.get_reg;
                 else lhs_reg = it.lhs.valueIR.values.get(0).bool_value.toString();
             } else {
                 lhs_reg = it.lhs.get_reg;
@@ -861,7 +868,7 @@ public class IRBuilder extends ASTVisitor {
             if (it.rhs.get_value) {
                 if (it.rhs.type.equals("int")) rhs_reg = it.rhs.valueIR.values.get(0).number_value.toString();
                 else if (it.rhs.type.equals("string"))
-                    rhs_reg = "\"" + it.rhs.valueIR.values.get(0).string_value.toString() + "\"";
+                    rhs_reg = it.rhs.get_reg;
                 else rhs_reg = it.rhs.valueIR.values.get(0).bool_value.toString();
             } else {
                 rhs_reg = it.rhs.get_reg;

@@ -135,6 +135,24 @@ public class ASMBuilder {
         //current_block.instrs.add(new Comment(instr.toString()));
         current_function.stack_pointer += 4;
         current_function.vreg_to_sp.put(instr.res_toString(), current_function.stack_pointer);
+        if(instr.lhs_reg.startsWith("%")){
+            LwInstruction lw = new LwInstruction("t0",current_function.vreg_to_sp.get(instr.lhs_reg));
+            current_block.instrs.add(lw);
+        } else {
+            LiInstruction li = new LiInstruction("t0", Integer.parseInt(instr.lhs_reg));
+            current_block.instrs.add(li);
+        }
+        if(instr.rhs_reg.startsWith("%")){
+            LwInstruction lw = new LwInstruction("t1",current_function.vreg_to_sp.get(instr.rhs_reg));
+            current_block.instrs.add(lw);
+        } else {
+            LiInstruction li = new LiInstruction("t1", Integer.parseInt(instr.rhs_reg));
+            current_block.instrs.add(li);
+        }
+        ByInstruction by = new ByInstruction(instr.opcode,"t0","t1","t0");
+        current_block.instrs.add(by);
+        SwInstruction sw = new SwInstruction("t0",current_function.vreg_to_sp.get(instr.res_toString()));
+        current_block.instrs.add(sw);
     }
     public void visit(BitcastInstruction instr){
         //current_block.instrs.add(new Comment(instr.toString()));
@@ -153,7 +171,17 @@ public class ASMBuilder {
             current_block.instrs.add(j);
             return;
         } else {
-
+            if(instr.condition.startsWith("%")){
+                LwInstruction lw = new LwInstruction("t0",current_function.vreg_to_sp.get(instr.condition));
+                current_block.instrs.add(lw);
+            } else {
+                LiInstruction li = new LiInstruction("t0",instr.condition.equals("true")?1:0);
+                current_block.instrs.add(li);
+            }
+            BeqzInstruction beqz = new BeqzInstruction("t0",instr.label2+"."+String.valueOf(current_function.function_count));
+            current_block.instrs.add(beqz);
+            JumpInstruction j = new JumpInstruction(instr.label1+"."+String.valueOf(current_function.function_count));
+            current_block.instrs.add(j);
         }
     }
     public void visit(CallInstruction instr){
