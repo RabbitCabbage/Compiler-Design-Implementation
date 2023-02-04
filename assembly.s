@@ -1,3 +1,7 @@
+	.data
+	.globl	hell
+hell:
+	.word	0
 	.text
 	.globl	kunkun
 kunkun:
@@ -29,6 +33,9 @@ entry.0:
 	sw	t0,	44(sp)
 	mv	t0,	s11
 	sw	t0,	48(sp)
+	li	t0	2
+	lui	t1,	%hi(hell)
+	sw	t0,	%lo(hell)(t1)
 	lw	t0,	4(sp)
 	mv	s0,	t0
 	lw	t0,	8(sp)
@@ -60,7 +67,7 @@ entry.0:
 	.globl	main
 main:
 entry.1:
-	addi	sp,	sp,	-92
+	addi	sp,	sp,	-136
 	mv	t0,	ra
 	sw	t0,	0(sp)
 	mv	t0,	s0
@@ -101,7 +108,7 @@ entry.1:
 	sw	t0,	56(sp)
 	lw	t0,	56(sp)
 	sw	t0,	68(sp)
-	li	t0	0
+	li	t0	1
 	slli	t0,	t0,	2
 	lw	t1,	68(sp)
 	add	t0,	t0,	t1
@@ -111,23 +118,70 @@ entry.1:
 	sw	t0,	0(t1)
 	lw	t0,	56(sp)
 	sw	t0,	76(sp)
-	li	t0	0
+	li	t0	3
 	slli	t0,	t0,	2
 	lw	t1,	76(sp)
 	add	t0,	t0,	t1
 	sw	t0,	80(sp)
-	lw	t0,	80(sp)
-	lw	t0,	0(t0)
+	li	t0	555
+	lw	t1,	80(sp)
+	sw	t0,	0(t1)
+	lui	t1,	%hi(hell)
+	lw	t0,	%lo(hell)(t1)
 	sw	t0,	84(sp)
-	lw	a0,	84(sp)
+	lw	t0,	56(sp)
+	sw	t0,	88(sp)
+	lw	t0,	84(sp)
+	slli	t0,	t0,	2
+	lw	t1,	88(sp)
+	add	t0,	t0,	t1
+	sw	t0,	92(sp)
+	li	t0	44
+	lw	t1,	92(sp)
+	sw	t0,	0(t1)
+	lw	t0,	56(sp)
+	sw	t0,	96(sp)
+	li	t0	1
+	slli	t0,	t0,	2
+	lw	t1,	96(sp)
+	add	t0,	t0,	t1
+	sw	t0,	100(sp)
+	lw	t0,	100(sp)
+	lw	t0,	0(t0)
+	sw	t0,	104(sp)
+	lw	a0,	104(sp)
+	call	printInt
+	lw	t0,	56(sp)
+	sw	t0,	108(sp)
+	li	t0	2
+	slli	t0,	t0,	2
+	lw	t1,	108(sp)
+	add	t0,	t0,	t1
+	sw	t0,	112(sp)
+	lw	t0,	112(sp)
+	lw	t0,	0(t0)
+	sw	t0,	116(sp)
+	lw	a0,	116(sp)
+	call	printInt
+	lw	t0,	56(sp)
+	sw	t0,	120(sp)
+	li	t0	3
+	slli	t0,	t0,	2
+	lw	t1,	120(sp)
+	add	t0,	t0,	t1
+	sw	t0,	124(sp)
+	lw	t0,	124(sp)
+	lw	t0,	0(t0)
+	sw	t0,	128(sp)
+	lw	a0,	128(sp)
 	call	printInt
 	li	t0	0
 	sw	t0,	52(sp)
 	j	exit.1
 exit.1:
 	lw	t0,	52(sp)
-	sw	t0,	88(sp)
-	lw	t0,	88(sp)
+	sw	t0,	132(sp)
+	lw	t0,	132(sp)
 	mv	a0,	t0
 	lw	t0,	4(sp)
 	mv	s0,	t0
@@ -155,5 +209,5 @@ exit.1:
 	mv	s11,	t0
 	lw	t0,	0(sp)
 	mv	ra,	t0
-	addi	sp,	sp,	92
+	addi	sp,	sp,	136
 	ret

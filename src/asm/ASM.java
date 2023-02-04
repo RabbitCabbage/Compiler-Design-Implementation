@@ -23,11 +23,17 @@ public class ASM {
             StringBuilder content = new StringBuilder();
             content.append(builder.stringConstants.get(str));
             content.deleteCharAt(content.length()-1);
+            String con = content.toString();
+            con = con.replace("\\","\\\\");
+            con = con.replace("\n","\\n");
+            con = con.replace("\t","\\t");
+            con = con.replace("\"","\\\"");
+            con = con.replace("\0","\\0");
             StringBuilder reg_name = new StringBuilder();
             reg_name.append(str);
             reg_name.deleteCharAt(0);
             text.append("\t.globl\t").append(reg_name).append("\n");
-            text.append(reg_name).append(":\n\t.asciz\t\"").append(content).append("\"\n");
+            text.append(reg_name).append(":\n\t.asciz\t\"").append(con).append("\"\n");
         }
         text.append("\t.text\n");
         builder.functions.forEach(f->{

@@ -8,7 +8,7 @@ public class GetElementPtrInstruction extends InstructionIR{
     public String type;
     public String result_reg;//目标在的reg
     public String instance_reg;
-    int index;
+    public int index;
     public boolean for_struct;
     public boolean for_array;
     int length;

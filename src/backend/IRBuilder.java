@@ -416,6 +416,7 @@ public class IRBuilder extends ASTVisitor {
             self = new StringBuilder();
             self.append(getter.getType(it.object.struct_name.get(it.object.struct_name.size()-1),0,null)).append(" ");
             self.append(last_reg);
+            call.para_have_value_or_get_reg.add(0,new Pair<>(false,new Pair<>(null,last_reg)));
             //System.out.println(self.toString());
         }else if(it.func.belong != null){
             if(it.object.getClass().toString().equals("class ast.PrimaryExpressionNode")){
@@ -423,9 +424,11 @@ public class IRBuilder extends ASTVisitor {
                 LoadInstruction load_this = new LoadInstruction(current_function.reg_count++,"%this.addr",getter.getType(it.func.belong.name,0,null));
                 current_block.addInstruction(load_this);
                 self.append(getter.getType(it.func.belong.name,0,null)).append(" %"+String.valueOf(load_this.reg));
+                call.para_have_value_or_get_reg.add(0,new Pair<>(false,new Pair<>(null," %"+String.valueOf(load_this.reg))));
             } else {
                 self = new StringBuilder();
                 self.append(getter.getType(it.func.belong.name,0,null)).append(" ").append(it.object.get_reg);
+                call.para_have_value_or_get_reg.add(0,new Pair<>(false,new Pair<>(null,it.object.get_reg)));
             }
         }
         if(self!=null)call.class_belong_info = self.toString();

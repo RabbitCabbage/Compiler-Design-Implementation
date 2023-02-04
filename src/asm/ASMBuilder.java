@@ -4,7 +4,6 @@ import IR.ClassIR;
 import IR.FunctionIR;
 import IR.GlobalVarIR;
 import IR.Instruction.*;
-import IR.Instruction.CallInstruction;
 import IR.LLVM;
 import asm.Instruction.*;
 import org.antlr.v4.runtime.misc.Pair;
@@ -225,8 +224,30 @@ public class ASMBuilder {
             current_block.instrs.add(sw_ptr);
             current_function.reg_contain_memaddr.add(instr.res_toString());
         }
-        else if(instr.for_struct){}
-        else {}
+        else if(instr.for_struct){
+            LiInstruction li_idx = new LiInstruction("t0",instr.index);
+            current_block.instrs.add(li_idx);
+            SlliInstruction slli = new SlliInstruction("t0","t0",2);
+            current_block.instrs.add(slli);
+            LwInstruction lw_ptr = new LwInstruction("t1",current_function.vreg_to_sp.get(instr.instance_reg));
+            current_block.instrs.add(lw_ptr);
+            ByInstruction add = new ByInstruction("+","t0","t1","t0");
+            current_block.instrs.add(add);
+            SwInstruction sw_ptr = new SwInstruction("t0",current_function.vreg_to_sp.get(instr.res_toString()));
+            current_block.instrs.add(sw_ptr);
+            current_function.reg_contain_memaddr.add(instr.res_toString());
+        }
+        else {
+            StringBuilder name = new StringBuilder();
+            name.append(instr.instance_reg);
+            name.deleteCharAt(0);
+            LuiInstruction lui = new LuiInstruction("t0", "%hi(" + name + ")");
+            current_block.instrs.add(lui);
+            AddiInstruction addi = new AddiInstruction("t0","t0","%lo("+name+")");
+            current_block.instrs.add(addi);
+            SwInstruction sw = new SwInstruction("t0",current_function.vreg_to_sp.get(instr.result_reg));
+            current_block.instrs.add(sw);
+        }
     }
     public void visit(LoadInstruction instr){
         //可能的形式是

@@ -1,15 +1,11 @@
+int hell = 2;
 int main(){
     int [] hello = new int [5];
-    hello[0] = 99;
-    printInt(hello[0]);
+    hello[1] = 99;
+    hello[3] = 555;
+    hello[hell] = 44;
+    printInt(hello[1]);
+    printInt(hello[2]);
+    printInt(hello[3]);
     return 0;
 }
-/*int main(){
-      int [] hello = new int [5];
-      hello[0] = 99;
-      int [][] doub = new int[5][3];
-      doub[1][2] = 999;
-      printInt(hello[0]);
-      printInt(doub[1][2]);
-      return 0;
-  }*/
