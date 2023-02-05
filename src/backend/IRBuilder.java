@@ -148,9 +148,6 @@ public class IRBuilder extends ASTVisitor {
 
     @Override
     public void visit(FunctionDefNode it) {
-        if(it.name.equals("Heap_Node")){
-            System.out.println("here");
-        }
         current_scope = new Scope(current_scope);
         if(it.belong!=null){
             //System.out.println(it.belong.name);
@@ -564,7 +561,7 @@ public class IRBuilder extends ASTVisitor {
     @Override
     public void visit(ContinueStatementNode it) {
         StringBuilder cond_block = new StringBuilder();
-        cond_block.append(loop_stack.peek().a).append(loop_stack.peek().a.equals("for")?".inc":".body").append(loop_stack.peek().b);
+        cond_block.append(loop_stack.peek().a).append(loop_stack.peek().a.equals("for")?".inc":".cond").append(loop_stack.peek().b);
         BrInstruction br = new BrInstruction(null, cond_block.toString(), null);
         current_block.addInstruction(br);
         current_function.blocks.add(current_block);

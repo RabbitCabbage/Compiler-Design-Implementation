@@ -2308,8 +2308,8 @@ int[] dijkstra(int s) {
   src.dist = 0;
   src.node = s;
   q.push(src);
+
   while (q.size() != 0) {
-    print("hello");
     Node node = q.pop();
     int u = node.node;
     if (visited[u] == 1)
@@ -2339,6 +2339,18 @@ int main() {
   init();
   int i;
   int j;
-  int[] d = dijkstra(0);
+  for (i = 0; i < n; ++i) {
+    int[] d = dijkstra(i);
+    for (j = 0; j < n; ++j) {
+      if (d[j] == INF) {
+        print("-1");
+      } else {
+        print(toString(d[j]));
+      }
+      print(" ");
+    }
+    println("");
+  }
+
   return 0;
 }

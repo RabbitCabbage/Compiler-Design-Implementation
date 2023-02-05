@@ -24,7 +24,7 @@ public class Compiler {
         InputStream input = System.in;
 //        InputStream input = new FileInputStream("./testcases/codegen/sorting/bubble_sort.mx");
 //        InputStream input = new FileInputStream("./testcases/codegen/shortest_path/dijkstra.mx");
-//        InputStream input = new FileInputStream("./testcases/codegen/t19.mx");
+//        InputStream input = new FileInputStream("./testcases/basic.mx");
 //        InputStream input = new FileInputStream(args[0]);
         try {
             MxLexer lexer = new MxLexer(CharStreams.fromStream(input));
