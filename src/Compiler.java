@@ -14,6 +14,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import parser.MxLexer;
 import parser.MxParser;
+import util.BuiltinPrinter;
 import util.SemaCheckListener;
 import util.error.SemanticError;
 
@@ -22,7 +23,7 @@ public class Compiler {
     public static void main(String[] args) throws Exception {
         InputStream input = System.in;
 //        InputStream input = new FileInputStream("./testcases/codegen/shortest_path/dijkstra.mx");
-//        InputStream input = new FileInputStream("./testcases/codegen/t61.mx");
+//        InputStream input = new FileInputStream("./testcases/codegen/t19.mx");
 //        InputStream input = new FileInputStream(args[0]);
         try {
             MxLexer lexer = new MxLexer(CharStreams.fromStream(input));
@@ -47,12 +48,18 @@ public class Compiler {
             pw1.flush();
             ASM asm = new ASM(new ASMBuilder());
             asm.builder.visit(ir.llvm);
-            File file2 = new File("test.s");
+            File file2 = new File("output.s");
             if(!file2.exists())file2.createNewFile();
-            FileWriter fw2 = new FileWriter("test.s");
+            FileWriter fw2 = new FileWriter("output.s");
             PrintWriter pw2 = new PrintWriter(fw2);
             pw2.print(asm.printASM());
             pw2.flush();
+            File file3 = new File("builtin.s");
+            if(!file3.exists())file3.createNewFile();
+            FileWriter fw3 = new FileWriter("builtin.s");
+            PrintWriter pw3 = new PrintWriter(fw3);
+            pw3.print(new BuiltinPrinter().toString());
+            pw3.flush();;
         } catch (Error error) {
             System.err.println(error.toString());
             throw new RuntimeException();

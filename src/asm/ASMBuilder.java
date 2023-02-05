@@ -308,6 +308,7 @@ public class ASMBuilder {
                 current_block.instrs.add(sw);//再把值写进去，写到resreg对应的
             }
             else {
+                //System.out.println(instr.from_reg_name);
                 int from_reg_offset = current_function.vreg_to_sp.get(instr.from_reg_name);
                 LwInstruction lw = new LwInstruction("t0", from_reg_offset);
                 current_block.instrs.add(lw);//先把值读出来，读到t0

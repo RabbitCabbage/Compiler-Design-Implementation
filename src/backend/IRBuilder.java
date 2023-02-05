@@ -381,7 +381,8 @@ public class IRBuilder extends ASTVisitor {
             else if(IR_name.equals("parseInt"))call.func_name = "string_parseInt";
             else if(IR_name.equals("length"))call.func_name = "string_length";
             else if(IR_name.equals("ord"))call.func_name = "string_ord";
-            if(((MemberCallExpressionNode)it.object).object.get_reg == null) {
+            //System.out.println(((MemberCallExpressionNode)it.object).object.get_reg);
+            if(((MemberCallExpressionNode)it.object).object.get_reg == null || ((MemberCallExpressionNode)it.object).object.get_reg.startsWith("@")) {
                 ((MemberCallExpressionNode) it.object).object.dot_function = null;
                 ((MemberCallExpressionNode) it.object).object.accept(this);
             }
