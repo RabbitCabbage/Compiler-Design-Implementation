@@ -11,9 +11,6 @@ g:
 	.globl	INF
 INF:
 	.word	0
-	.globl	.str0
-.str0:
-	.asciz	"hello"
 	.text
 	.globl	kunkun
 kunkun:
@@ -262,177 +259,175 @@ entry.2:
 	sw	a0,	56(sp)
 	lui	t1,	%hi(n1)
 	lw	t0,	%lo(n1)(t1)
-	sw	t0,	104(sp)
-	lw	t0,	104(sp)
+	sw	t0,	108(sp)
+	lw	t0,	108(sp)
 	li	t1	4
 	mul	t0,	t0,	t1
-	sw	t0,	108(sp)
-	lw	a0,	104(sp)
-	lw	a1,	108(sp)
+	sw	t0,	112(sp)
+	lw	a0,	108(sp)
+	lw	a1,	112(sp)
 	call	malloc_
 	mv	t0,	a0
-	sw	t0,	112(sp)
-	lw	t0,	112(sp)
 	sw	t0,	116(sp)
 	lw	t0,	116(sp)
+	sw	t0,	120(sp)
+	lw	t0,	120(sp)
 	sw	t0,	60(sp)
 	lui	t1,	%hi(n1)
 	lw	t0,	%lo(n1)(t1)
-	sw	t0,	120(sp)
-	lw	t0,	120(sp)
+	sw	t0,	124(sp)
+	lw	t0,	124(sp)
 	li	t1	4
 	mul	t0,	t0,	t1
-	sw	t0,	124(sp)
-	lw	a0,	120(sp)
-	lw	a1,	124(sp)
+	sw	t0,	128(sp)
+	lw	a0,	124(sp)
+	lw	a1,	128(sp)
 	call	malloc_
 	mv	t0,	a0
-	sw	t0,	128(sp)
-	lw	t0,	128(sp)
 	sw	t0,	132(sp)
 	lw	t0,	132(sp)
+	sw	t0,	136(sp)
+	lw	t0,	136(sp)
 	sw	t0,	64(sp)
 	li	t0	0
 	sw	t0,	68(sp)
 	j	for.cond7.2
 for.cond7.2:
 	lw	t0,	68(sp)
-	sw	t0,	136(sp)
+	sw	t0,	140(sp)
 	lui	t1,	%hi(n1)
 	lw	t0,	%lo(n1)(t1)
-	sw	t0,	140(sp)
-	lw	t0,	136(sp)
-	lw	t1,	140(sp)
-	slt	t0,	t0,	t1
 	sw	t0,	144(sp)
-	lw	t0,	144(sp)
+	lw	t0,	140(sp)
+	lw	t1,	144(sp)
+	slt	t0,	t0,	t1
+	sw	t0,	148(sp)
+	lw	t0,	148(sp)
 	beqz	t0,	for.end7.2
 	j	for.body7.2
 for.body7.2:
 	lw	t0,	68(sp)
-	sw	t0,	148(sp)
-	lw	t0,	64(sp)
 	sw	t0,	152(sp)
-	lw	t0,	148(sp)
-	slli	t0,	t0,	2
-	lw	t1,	152(sp)
-	add	t0,	t0,	t1
+	lw	t0,	64(sp)
 	sw	t0,	156(sp)
+	lw	t0,	152(sp)
+	slli	t0,	t0,	2
+	lw	t1,	156(sp)
+	add	t0,	t0,	t1
+	sw	t0,	160(sp)
 	lui	t1,	%hi(INF)
 	lw	t0,	%lo(INF)(t1)
-	sw	t0,	160(sp)
-	lw	t0,	160(sp)
-	lw	t1,	156(sp)
+	sw	t0,	164(sp)
+	lw	t0,	164(sp)
+	lw	t1,	160(sp)
 	sw	t0,	0(t1)
 	lw	t0,	68(sp)
-	sw	t0,	164(sp)
-	lw	t0,	60(sp)
 	sw	t0,	168(sp)
-	lw	t0,	164(sp)
-	slli	t0,	t0,	2
-	lw	t1,	168(sp)
-	add	t0,	t0,	t1
+	lw	t0,	60(sp)
 	sw	t0,	172(sp)
-	li	t0	0
+	lw	t0,	168(sp)
+	slli	t0,	t0,	2
 	lw	t1,	172(sp)
+	add	t0,	t0,	t1
+	sw	t0,	176(sp)
+	li	t0	0
+	lw	t1,	176(sp)
 	sw	t0,	0(t1)
 	j	for.inc7.2
 for.inc7.2:
 	lw	t0,	68(sp)
-	sw	t0,	176(sp)
-	lw	t0,	176(sp)
-	li	t1	1
-	add	t0,	t0,	t1
 	sw	t0,	180(sp)
 	lw	t0,	180(sp)
+	li	t1	1
+	add	t0,	t0,	t1
+	sw	t0,	184(sp)
+	lw	t0,	184(sp)
 	sw	t0,	68(sp)
 	j	for.cond7.2
 for.end7.2:
 	lw	t0,	56(sp)
-	sw	t0,	184(sp)
-	lw	t0,	64(sp)
 	sw	t0,	188(sp)
-	lw	t0,	184(sp)
-	slli	t0,	t0,	2
-	lw	t1,	188(sp)
-	add	t0,	t0,	t1
+	lw	t0,	64(sp)
 	sw	t0,	192(sp)
-	li	t0	0
+	lw	t0,	188(sp)
+	slli	t0,	t0,	2
 	lw	t1,	192(sp)
+	add	t0,	t0,	t1
+	sw	t0,	196(sp)
+	li	t0	0
+	lw	t1,	196(sp)
 	sw	t0,	0(t1)
 	li	a0	0
 	li	a1	4
 	call	malloc_
 	mv	t0,	a0
-	sw	t0,	196(sp)
-	lw	t0,	196(sp)
 	sw	t0,	200(sp)
-	lw	a0,	200(sp)
+	lw	t0,	200(sp)
+	sw	t0,	204(sp)
+	lw	a0,	204(sp)
 	call	Heap_Node
 	mv	t0,	a0
-	sw	t0,	204(sp)
-	lw	t0,	204(sp)
+	sw	t0,	208(sp)
+	lw	t0,	208(sp)
 	sw	t0,	72(sp)
 	li	a0	0
 	li	a1	8
 	call	malloc_
 	mv	t0,	a0
-	sw	t0,	208(sp)
-	lw	t0,	208(sp)
 	sw	t0,	212(sp)
 	lw	t0,	212(sp)
+	sw	t0,	216(sp)
+	lw	t0,	216(sp)
 	sw	t0,	76(sp)
 	lw	t0,	76(sp)
-	sw	t0,	216(sp)
+	sw	t0,	220(sp)
 	li	t0	1
 	slli	t0,	t0,	2
-	lw	t1,	216(sp)
-	add	t0,	t0,	t1
-	sw	t0,	220(sp)
-	li	t0	0
 	lw	t1,	220(sp)
-	sw	t0,	0(t1)
-	lw	t0,	76(sp)
+	add	t0,	t0,	t1
 	sw	t0,	224(sp)
 	li	t0	0
-	slli	t0,	t0,	2
 	lw	t1,	224(sp)
-	add	t0,	t0,	t1
+	sw	t0,	0(t1)
+	lw	t0,	76(sp)
 	sw	t0,	228(sp)
-	lw	t0,	56(sp)
-	sw	t0,	232(sp)
-	lw	t0,	232(sp)
+	li	t0	0
+	slli	t0,	t0,	2
 	lw	t1,	228(sp)
+	add	t0,	t0,	t1
+	sw	t0,	232(sp)
+	lw	t0,	56(sp)
+	sw	t0,	236(sp)
+	lw	t0,	236(sp)
+	lw	t1,	232(sp)
 	sw	t0,	0(t1)
 	lw	t0,	72(sp)
-	sw	t0,	236(sp)
-	lw	t0,	76(sp)
 	sw	t0,	240(sp)
-	lw	a0,	236(sp)
-	lw	a1,	240(sp)
+	lw	t0,	76(sp)
+	sw	t0,	244(sp)
+	lw	a0,	240(sp)
+	lw	a1,	244(sp)
 	call	push
+	li	t0	3
+	sw	t0,	80(sp)
 	j	while.cond8.2
 while.cond8.2:
-	lw	t0,	72(sp)
-	sw	t0,	244(sp)
-	lw	a0,	244(sp)
-	call	size1
-	mv	t0,	a0
+	lw	t0,	80(sp)
 	sw	t0,	248(sp)
 	lw	t0,	248(sp)
-	li	t1	0
+	li	t1	1
 	sub	t0,	t0,	t1
-	snez	t0,	t0
 	sw	t0,	252(sp)
 	lw	t0,	252(sp)
+	sw	t0,	80(sp)
+	lw	t0,	248(sp)
+	li	t1	0
+	slt	t0,	t1,	t0
+	sw	t0,	256(sp)
+	lw	t0,	256(sp)
 	beqz	t0,	while.end8.2
 	j	while.body8.2
 while.body8.2:
-	lui	t0,	%hi(.str0)
-	addi	t0,	t0,	%lo(.str0)
-	sw	t0,	256(sp)
-	lw	a0,	256(sp)
-	call	print
 	lw	t0,	72(sp)
 	sw	t0,	260(sp)
 	lw	a0,	260(sp)
@@ -440,8 +435,8 @@ while.body8.2:
 	mv	t0,	a0
 	sw	t0,	264(sp)
 	lw	t0,	264(sp)
-	sw	t0,	80(sp)
-	lw	t0,	80(sp)
+	sw	t0,	84(sp)
+	lw	t0,	84(sp)
 	sw	t0,	268(sp)
 	li	t0	0
 	slli	t0,	t0,	2
@@ -452,8 +447,8 @@ while.body8.2:
 	lw	t0,	0(t0)
 	sw	t0,	276(sp)
 	lw	t0,	276(sp)
-	sw	t0,	84(sp)
-	lw	t0,	84(sp)
+	sw	t0,	88(sp)
+	lw	t0,	88(sp)
 	sw	t0,	280(sp)
 	lw	t0,	60(sp)
 	sw	t0,	284(sp)
@@ -476,7 +471,7 @@ while.body8.2:
 if.then7.2:
 	j	while.body8.2
 if.end7.2:
-	lw	t0,	84(sp)
+	lw	t0,	88(sp)
 	sw	t0,	300(sp)
 	lw	t0,	60(sp)
 	sw	t0,	304(sp)
@@ -488,7 +483,7 @@ if.end7.2:
 	li	t0	1
 	lw	t1,	308(sp)
 	sw	t0,	0(t1)
-	lw	t0,	84(sp)
+	lw	t0,	88(sp)
 	sw	t0,	312(sp)
 	lui	t1,	%hi(g)
 	lw	t0,	%lo(g)(t1)
@@ -510,10 +505,10 @@ if.end7.2:
 	lw	t0,	0(t0)
 	sw	t0,	332(sp)
 	lw	t0,	332(sp)
-	sw	t0,	88(sp)
+	sw	t0,	92(sp)
 	j	for.cond9.2
 for.cond9.2:
-	lw	t0,	88(sp)
+	lw	t0,	92(sp)
 	sw	t0,	336(sp)
 	li	t0	0
 	li	t1	1
@@ -528,7 +523,7 @@ for.cond9.2:
 	beqz	t0,	for.end9.2
 	j	for.body9.2
 for.body9.2:
-	lw	t0,	88(sp)
+	lw	t0,	92(sp)
 	sw	t0,	348(sp)
 	lui	t1,	%hi(g)
 	lw	t0,	%lo(g)(t1)
@@ -558,8 +553,8 @@ for.body9.2:
 	lw	t0,	0(t0)
 	sw	t0,	376(sp)
 	lw	t0,	376(sp)
-	sw	t0,	92(sp)
-	lw	t0,	88(sp)
+	sw	t0,	96(sp)
+	lw	t0,	92(sp)
 	sw	t0,	380(sp)
 	lui	t1,	%hi(g)
 	lw	t0,	%lo(g)(t1)
@@ -589,8 +584,8 @@ for.body9.2:
 	lw	t0,	0(t0)
 	sw	t0,	408(sp)
 	lw	t0,	408(sp)
-	sw	t0,	96(sp)
-	lw	t0,	84(sp)
+	sw	t0,	100(sp)
+	lw	t0,	88(sp)
 	sw	t0,	412(sp)
 	lw	t0,	64(sp)
 	sw	t0,	416(sp)
@@ -602,17 +597,17 @@ for.body9.2:
 	lw	t0,	420(sp)
 	lw	t0,	0(t0)
 	sw	t0,	424(sp)
-	lw	t0,	96(sp)
+	lw	t0,	100(sp)
 	sw	t0,	428(sp)
 	lw	t0,	424(sp)
 	lw	t1,	428(sp)
 	add	t0,	t0,	t1
 	sw	t0,	432(sp)
 	lw	t0,	432(sp)
-	sw	t0,	100(sp)
-	lw	t0,	100(sp)
+	sw	t0,	104(sp)
+	lw	t0,	104(sp)
 	sw	t0,	436(sp)
-	lw	t0,	92(sp)
+	lw	t0,	96(sp)
 	sw	t0,	440(sp)
 	lw	t0,	64(sp)
 	sw	t0,	444(sp)
@@ -635,7 +630,7 @@ for.body9.2:
 if.then8.2:
 	j	for.inc9.2
 if.end8.2:
-	lw	t0,	92(sp)
+	lw	t0,	96(sp)
 	sw	t0,	460(sp)
 	lw	t0,	64(sp)
 	sw	t0,	464(sp)
@@ -644,7 +639,7 @@ if.end8.2:
 	lw	t1,	464(sp)
 	add	t0,	t0,	t1
 	sw	t0,	468(sp)
-	lw	t0,	100(sp)
+	lw	t0,	104(sp)
 	sw	t0,	472(sp)
 	lw	t0,	472(sp)
 	lw	t1,	468(sp)
@@ -657,27 +652,27 @@ if.end8.2:
 	lw	t0,	476(sp)
 	sw	t0,	480(sp)
 	lw	t0,	480(sp)
-	sw	t0,	80(sp)
-	lw	t0,	80(sp)
+	sw	t0,	84(sp)
+	lw	t0,	84(sp)
 	sw	t0,	484(sp)
 	li	t0	0
 	slli	t0,	t0,	2
 	lw	t1,	484(sp)
 	add	t0,	t0,	t1
 	sw	t0,	488(sp)
-	lw	t0,	92(sp)
+	lw	t0,	96(sp)
 	sw	t0,	492(sp)
 	lw	t0,	492(sp)
 	lw	t1,	488(sp)
 	sw	t0,	0(t1)
-	lw	t0,	80(sp)
+	lw	t0,	84(sp)
 	sw	t0,	496(sp)
 	li	t0	1
 	slli	t0,	t0,	2
 	lw	t1,	496(sp)
 	add	t0,	t0,	t1
 	sw	t0,	500(sp)
-	lw	t0,	92(sp)
+	lw	t0,	96(sp)
 	sw	t0,	504(sp)
 	lw	t0,	64(sp)
 	sw	t0,	508(sp)
@@ -694,14 +689,14 @@ if.end8.2:
 	sw	t0,	0(t1)
 	lw	t0,	72(sp)
 	sw	t0,	520(sp)
-	lw	t0,	80(sp)
+	lw	t0,	84(sp)
 	sw	t0,	524(sp)
 	lw	a0,	520(sp)
 	lw	a1,	524(sp)
 	call	push
 	j	for.inc9.2
 for.inc9.2:
-	lw	t0,	88(sp)
+	lw	t0,	92(sp)
 	sw	t0,	528(sp)
 	lui	t1,	%hi(g)
 	lw	t0,	%lo(g)(t1)
@@ -723,7 +718,7 @@ for.inc9.2:
 	lw	t0,	0(t0)
 	sw	t0,	548(sp)
 	lw	t0,	548(sp)
-	sw	t0,	88(sp)
+	sw	t0,	92(sp)
 	j	for.cond9.2
 for.end9.2:
 	j	while.cond8.2
