@@ -1,8 +1,8 @@
 package backend;
 
-import IR.*;
-import IR.IRTypeGetter;
-import IR.Instruction.*;
+import ir.*;
+import ir.IRTypeGetter;
+import ir.Instruction.*;
 import ast.*;
 import frontend.Symbols;
 import org.antlr.v4.runtime.misc.Pair;

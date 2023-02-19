@@ -1,6 +1,6 @@
 package frontend;
 
-import IR.FunctionIR;
+import ir.FunctionIR;
 import ast.*;
 import util.Position;
 import util.error.SemanticError;

@@ -1,5 +1,3 @@
-import asm.ASM;
-import asm.ASMBuilder;
 import ast.RootNode;
 import backend.IRBuilder;
 import frontend.ASTBuilder;
@@ -47,13 +45,11 @@ public class Compiler {
             PrintWriter pw1 = new PrintWriter(fw1);
             pw1.print(ir.llvm.toDotLLVM());
             pw1.flush();
-            ASM asm = new ASM(new ASMBuilder());
-            asm.builder.visit(ir.llvm);
             File file2 = new File("output.s");
             if(!file2.exists())file2.createNewFile();
             FileWriter fw2 = new FileWriter("output.s");
             PrintWriter pw2 = new PrintWriter(fw2);
-            pw2.print(asm.printASM());
+            pw2.print(new String());//todo asm printer
             pw2.flush();
             File file3 = new File("builtin.s");
             if(!file3.exists())file3.createNewFile();

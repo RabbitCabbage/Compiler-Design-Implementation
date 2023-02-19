@@ -3,7 +3,7 @@ package frontend;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
-import IR.FunctionIR;
+import ir.FunctionIR;
 import ast.ClassDefNode;
 import ast.FunctionDefNode;
 import ast.SuiteNode;

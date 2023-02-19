@@ -1,6 +1,6 @@
 package ast;
 
-import IR.ValueUnit;
+import ir.ValueUnit;
 import util.Position;
 
 public class BinaryExpressionNode extends ExpressionNode{
