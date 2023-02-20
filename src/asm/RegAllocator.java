@@ -1,10 +1,11 @@
-package asm.operand;
+package asm;
 
 import asm.graph.ControlFlowGraph;
 import asm.graph.IGBuilder;
 import asm.graph.IGNode;
 import asm.graph.InterferenceGraph;
 import asm.instruction.MvInstruction;
+import asm.operand.PhysicalRegister;
 
 import java.util.ArrayList;
 import java.util.HashMap;

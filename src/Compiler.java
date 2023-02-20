@@ -1,3 +1,5 @@
+import asm.ASMBuilder;
+import asm.ASMPrinter;
 import ast.RootNode;
 import backend.IRBuilder;
 import frontend.ASTBuilder;
@@ -19,10 +21,10 @@ import util.error.SemanticError;
 
 public class Compiler {
     public static void main(String[] args) throws Exception {
-        InputStream input = System.in;
+//        InputStream input = System.in;
 //        InputStream input = new FileInputStream("./testcases/codegen/sorting/bubble_sort.mx");
 //        InputStream input = new FileInputStream("./testcases/codegen/shortest_path/dijkstra.mx");
-//        InputStream input = new FileInputStream("./testcases/basic.mx");
+        InputStream input = new FileInputStream("./testcases/basic.mx");
 //        InputStream input = new FileInputStream(args[0]);
         try {
             MxLexer lexer = new MxLexer(CharStreams.fromStream(input));
@@ -49,7 +51,9 @@ public class Compiler {
             if(!file2.exists())file2.createNewFile();
             FileWriter fw2 = new FileWriter("output.s");
             PrintWriter pw2 = new PrintWriter(fw2);
-            pw2.print(new String());//todo asm printer
+            ASMBuilder asm = new ASMBuilder();
+            asm.visit(ir.llvm);
+            pw2.print(new ASMPrinter(asm).print());
             pw2.flush();
             File file3 = new File("builtin.s");
             if(!file3.exists())file3.createNewFile();

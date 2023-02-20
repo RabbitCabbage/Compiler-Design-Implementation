@@ -230,7 +230,7 @@ class taskConst {
 int main() {
     taskNTT ntt = new taskNTT(); // normal hard numerical task
     ntt.main();
-    taskStress str = new taskStress(); // hard to build IR, slow in DomTree builder
+    taskStress str = new taskStress(); // hard to build ir, slow in DomTree builder
     str.main();
     taskInline inl = new taskInline(); 
     if (inl.main() != 0) return -1;
